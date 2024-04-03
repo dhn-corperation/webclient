@@ -1,5 +1,5 @@
 # webclient
-## 종류
+## Service
 - GClient
 - DHNClient
 
