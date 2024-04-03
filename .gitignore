@@ -1,0 +1,13 @@
+/bin
+/pkg
+
+/src/github.com
+/src/golang.org
+/src/google.golang.org
+/src/gopkg.in
+/src/launchpad.net
+
+/src/DHNClient/log
+/src/DHNClient/config.ini
+/src/DHNClient/DHNClient
+/src/DHNClient/GClient
