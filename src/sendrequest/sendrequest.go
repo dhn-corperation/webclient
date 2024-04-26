@@ -192,6 +192,7 @@ func sendProcess(group_no string) {
 			}
 
 		}
+		masterData["price"] = fmt.Sprintf("%d", masterData["price"])
 		finalRows = append(finalRows, masterData)
 		procCount++
 	}
