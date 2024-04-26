@@ -10,7 +10,6 @@ import (
 
 	"webclient/src/config"
 	"webclient/src/databasepool"
-	"webclient/src/resultreq"
 	"webclient/src/sendrequest"
 
 	//"time"
@@ -19,11 +18,11 @@ import (
 )
 
 const (
-	name        = "DHNClient"
+	name        = "DHNClientTest"
 	description = "대형네트웍스 카카오 발송 Client"
 )
 
-var dependencies = []string{"DHNClient.service"}
+var dependencies = []string{"DHNClientTest.service"}
 
 var resultTable string
 
@@ -33,7 +32,7 @@ type Service struct {
 
 func (service *Service) Manage() (string, error) {
 
-	usage := "Usage: DHNClient install | remove | start | stop | status"
+	usage := "Usage: DHNClientTest install | remove | start | stop | status"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
@@ -116,6 +115,6 @@ func resultProc() {
 
 	go sendrequest.Process()
 
-	go resultreq.ResultReqProc()
+	//go resultreq.ResultReqProc()
 
 }

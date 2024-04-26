@@ -15,7 +15,11 @@ import (
 
 type Config struct {
 	DB          string
-	DBURL       string
+	HOST        string
+	PORT        string
+	DBID        string
+	DBPW        string
+	DBNAME      string
 	USERID      string
 	SERVER      string
 	REQTABLE    string
@@ -40,8 +44,6 @@ func InitConfig() {
 		log.Fatalf("Failed to ensure log directory: %s", err)
 	}
 	path := filepath.Join(logDir, "DHNClient")
-	//path := "/root/DHNClient/log/DHNClient"
-	//path := "./log/DHNClient"
 	loc, _ := time.LoadLocation("Asia/Seoul")
 	writer, err := rotatelogs.New(
 		fmt.Sprintf("%s-%s.log", path, "%Y-%m-%d"),
@@ -65,18 +67,9 @@ func InitConfig() {
 }
 
 func readConfig() Config {
-	/*
-		var configfile = "/root/DHNClient/config.ini"
-		_, err := os.Stat(configfile)
-		if err != nil {
-			fmt.Println("Config file is missing : ", configfile)
-		}
-	*/
 	realpath, _ := os.Executable()
 	dir := filepath.Dir(realpath)
 	var configfile = filepath.Join(dir, "config.ini")
-	//var configfile = "/root/DHNServer/config.ini"
-	//var configfile = "./config.ini"
 	_, err := os.Stat(configfile)
 	if err != nil {
 
@@ -108,8 +101,6 @@ func InitGenieConfig() {
 		log.Fatalf("Failed to ensure log directory: %s", err)
 	}
 	path := filepath.Join(logDir, "GClient")
-	//path := "/root/GenieClient/log/GenieClient"
-	//path := "./log/DHNClient"
 	loc, _ := time.LoadLocation("Asia/Seoul")
 	writer, err := rotatelogs.New(
 		fmt.Sprintf("%s-%s.log", path, "%Y-%m-%d"),
@@ -133,18 +124,9 @@ func InitGenieConfig() {
 }
 
 func readGenieConfig() Config {
-	/*
-		var configfile = "/root/GenieClient/config.ini"
-		_, err := os.Stat(configfile)
-		if err != nil {
-			fmt.Println("Config file is missing : ", configfile)
-		}
-	*/
 	realpath, _ := os.Executable()
 	dir := filepath.Dir(realpath)
 	var configfile = filepath.Join(dir, "config.ini")
-	//var configfile = "/root/DHNServer/config.ini"
-	//var configfile = "./config.ini"
 	_, err := os.Stat(configfile)
 	if err != nil {
 
@@ -180,10 +162,14 @@ func createConfig(dirName string) error {
 	if err != nil {
 		return fmt.Errorf("Config file create fail: %w", err)
 	}
+
 	configData := []string{
 		`# DB 관련`,
 		`DB = "DB종류"`,
-		`DBURL = "사용자:패스워드@tcp(000.000.000.000:포트번호)/데이터베이스"`,
+		`HOST = "DB IP주소"`,
+		`PORT = "DB 포트"`,
+		`DBID = "DB 사용자 id"`,
+		`DBPW = "DB 사용자 password"`,
 		``,
 		`# DHN Server`,
 		`UESRID = "ID명"`,

@@ -26,7 +26,7 @@ func Process() {
 
 			var count int
 
-			cnterr := databasepool.DB.QueryRow("select count(1) as cnt from " + config.Conf.REQTABLE + " r where  group_no is null and ( r.reserve_dt < DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') or r.reserve_dt = '00000000000000') limit 1").Scan(&count)
+			cnterr := databasepool.DB.QueryRow("SELECT COUNT(1) AS cnt FROM " + config.Conf.REQTABLE + " r WHERE group_no IS NULL AND (r.reserve_dt < TO_CHAR(NOW(), 'YYYYMMDDHH24MISS') OR r.reserve_dt = '00000000000000')").Scan(&count)
 
 			if cnterr != nil {
 				config.Stdlog.Println("Request Table - select 오류 : " + cnterr.Error())
@@ -36,7 +36,7 @@ func Process() {
 					var startNow = time.Now()
 					var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 
-					updateRows, err := databasepool.DB.Exec("update " + config.Conf.REQTABLE + " r set group_no = '" + group_no + "' where  group_no is null and ( r.reserve_dt < DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') or r.reserve_dt = '00000000000000') limit 1000")
+					updateRows, err := databasepool.DB.Exec("update " + config.Conf.REQTABLE + " r set group_no = '" + group_no + "' where msgid IN (SELECT msgid FROM dhn_request WHERE group_no IS NULL AND (reserve_dt < TO_CHAR(NOW(), 'YYYYMMDDHH24MISS') or reserve_dt = '00000000000000') LIMIT 1000)")
 					if err != nil {
 						config.Stdlog.Println("Request Table - Group No Update 오류 : " + err.Error())
 					} else {
@@ -195,11 +195,12 @@ func sendProcess(group_no string) {
 		finalRows = append(finalRows, masterData)
 		procCount++
 	}
-	//fmt.Println(finalRows)
+	fmt.Println(finalRows)
 	resp, err := config.Client.R().
 		SetHeaders(map[string]string{"Content-Type": "application/json", "userid": conf.USERID}).
 		SetBody(finalRows).
-		Post(conf.SERVER + "req")
+		Post(conf.SERVER + "testyyw")
+		//Post(conf.SERVER + "req")
 
 	if err != nil {
 		errlog.Println("메시지 서버 호출 오류", err)
