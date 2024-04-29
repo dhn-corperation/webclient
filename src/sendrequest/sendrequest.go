@@ -186,20 +186,15 @@ func sendProcess(group_no string) {
 		finalRows = append(finalRows, masterData)
 		procCount++
 	}
-
-	// DHNCenter에 발송을 요청한다.
-	// resp, err := config.Client.R().
-	// 	SetHeaders(map[string]string{"Content-Type": "application/json", "userid": conf.USERID}).
-	// 	SetBody(finalRows).
-	// 	Post(conf.SERVER + "testyyw")
-	//Post(conf.SERVER + "req")
 	jsonData, _ := json.Marshal(finalRows)
-	req, err := http.NewRequest("POST", conf.SERVER+"testyyw", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", conf.SERVER+"req", bytes.NewBuffer(jsonData))
 	if err != nil {
 		stdlog.Println("DHNCenter API 발송 request 만들기 실패 ", err.Error())
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("userid", conf.USERID)
+
+	errlog.Println("userid : ", conf.USERID)
 
 	resp, err := config.GoClient.Do(req)
 	if err != nil {
