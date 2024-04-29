@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -34,6 +35,12 @@ var Conf Config
 var Stdlog *log.Logger
 var IsRunning bool = true
 var Client *resty.Client
+var GoClient *http.Client = &http.Client{
+	Timeout: time.Second * 30,
+	Transport: &http.Transport{
+		TLSHandshakeTimeout: 10 * time.Second,
+	},
+}
 
 func InitConfig() {
 	realpath, _ := os.Executable()
