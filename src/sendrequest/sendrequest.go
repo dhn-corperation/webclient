@@ -2,10 +2,12 @@ package sendrequest
 
 import (
 	//"bytes"
+	"bytes"
 	"database/sql"
-	"reflect"
+	"encoding/json"
+	"net/http"
 	"webclient/src/common"
-	"webclient/src/config"
+	config "webclient/src/config"
 	"webclient/src/databasepool"
 
 	//"encoding/json"
@@ -26,26 +28,26 @@ func Process() {
 	for {
 		if procCnt < 5 {
 
-			var count int
+			var count sql.NullInt64
 
 			cnterr := databasepool.DB.QueryRow("SELECT COUNT(1) AS cnt FROM " + config.Conf.REQTABLE + " r WHERE group_no IS NULL AND (r.reserve_dt < TO_CHAR(NOW(), 'YYYYMMDDHH24MISS') OR r.reserve_dt = '00000000000000')").Scan(&count)
 
 			if cnterr != nil {
-				config.Stdlog.Println("Request Table - select 오류 : " + cnterr.Error())
+				config.Stdlog.Println("sendrequest.go -> Request Table - select 오류 : " + cnterr.Error())
 			} else {
 
-				if count > 0 {
+				if count.Valid && count.Int64 > 0 {
 					var startNow = time.Now()
 					var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 
 					updateRows, err := databasepool.DB.Exec("update " + config.Conf.REQTABLE + " r set group_no = '" + group_no + "' where msgid IN (SELECT msgid FROM dhn_request WHERE group_no IS NULL AND (reserve_dt < TO_CHAR(NOW(), 'YYYYMMDDHH24MISS') or reserve_dt = '00000000000000') LIMIT 1000)")
 					if err != nil {
-						config.Stdlog.Println("Request Table - Group No Update 오류 : " + err.Error())
+						config.Stdlog.Println("sendrequest.go -> Request Table - Group No Update 오류 : " + err.Error())
 					} else {
 						rowcnt, err1 := updateRows.RowsAffected()
 						if err1 != nil {
 							rowcnt = 0
-							config.Stdlog.Println("Request Table - RowsAffected 오류 : " + err.Error())
+							config.Stdlog.Println("sendrequest.go -> Request Table - RowsAffected 오류 : " + err1.Error())
 						}
 
 						if rowcnt > 0 {
@@ -112,20 +114,16 @@ func sendProcess(group_no string) {
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
-		//errlog.Fatal(err)
 		stdlog.Println("sendProcess 쿼리 에러 group_no : ", group_no)
 		stdlog.Println("sendProcess 쿼리 에러 query : ", reqsql)
 		stdlog.Println("sendProcess 쿼리 에러 : ", err)
-		//stdlog.Println(conf.REQTABLE + " Table - Select 오류 : ( " + group_no + " ) : " + err.Error())
 		return
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
-		//errlog.Fatal(err)
 		errlog.Println("sendProcess 컬럼 초기화 에러 group_no : ", group_no)
 		errlog.Println("sendProcess 컬럼 초기화 에러 : ", err)
-		//errlog.Println(conf.REQTABLE + " Table - ColumnType 조회 오류" + err.Error())
 		return
 	}
 	count := len(columnTypes)
@@ -146,10 +144,8 @@ func sendProcess(group_no string) {
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
-			//errlog.Fatal(err)
 			errlog.Println("sendProcess 컬럼 스캔 에러 group_no : ", group_no)
 			errlog.Println("sendProcess 컬럼 스캔 에러 : ", err)
-			//errlog.Println(conf.REQTABLE + " Table - Scan 오류" + err.Error())
 		}
 
 		masterData := map[string]interface{}{}
@@ -187,26 +183,31 @@ func sendProcess(group_no string) {
 			}
 
 		}
-
-		for key, value := range masterData {
-			stdlog.Printf("Key: %s, Value: %v, Type: %s\n", key, value, reflect.TypeOf(value))
-		}
-		//masterData["price"] = fmt.Sprintf("%d", masterData["price"])
 		finalRows = append(finalRows, masterData)
 		procCount++
 	}
-	resp, err := config.Client.R().
-		SetHeaders(map[string]string{"Content-Type": "application/json", "userid": conf.USERID}).
-		SetBody(finalRows).
-		Post(conf.SERVER + "testyyw")
-		//Post(conf.SERVER + "req")
 
+	// DHNCenter에 발송을 요청한다.
+	// resp, err := config.Client.R().
+	// 	SetHeaders(map[string]string{"Content-Type": "application/json", "userid": conf.USERID}).
+	// 	SetBody(finalRows).
+	// 	Post(conf.SERVER + "testyyw")
+	//Post(conf.SERVER + "req")
+	jsonData, _ := json.Marshal(finalRows)
+	req, err := http.NewRequest("POST", conf.SERVER+"testyyw", bytes.NewBuffer(jsonData))
 	if err != nil {
-		errlog.Println("메시지 서버 호출 오류", err)
+		stdlog.Println("DHNCenter API 발송 request 만들기 실패 ", err.Error())
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("userid", conf.USERID)
+
+	resp, err := config.GoClient.Do(req)
+	if err != nil {
+		errlog.Println("sendProcess 메시지 서버 호출 오류 : ", err)
 		databasepool.DB.Exec("update " + conf.REQTABLE + "set group_no = null where group_no = '" + group_no + "'")
 	} else {
 
-		if resp.StatusCode() == 200 {
+		if resp.StatusCode == 200 {
 			databasepool.DB.Exec("delete from " + conf.REQTABLE + " where group_no = '" + group_no + "'")
 
 		} else {
