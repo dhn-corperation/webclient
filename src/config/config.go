@@ -179,7 +179,7 @@ func createConfig(dirName string) error {
 		`DBPW = "DB 사용자 password"`,
 		``,
 		`# DHN Server`,
-		`UESRID = "ID명"`,
+		`USERID = "ID명"`,
 		`SERVER = "서버 주소"`,
 		``,
 		`# 카카오 발송용 Table`,
