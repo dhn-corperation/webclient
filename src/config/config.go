@@ -186,7 +186,7 @@ func createConfig(dirName string) error {
 		`DBURL = "사용자:패스워드@tcp(000.000.000.000:포트번호)/데이터베이스"`,
 		``,
 		`# DHN Server`,
-		`UESRID = "ID명"`,
+		`USERID = "ID명"`,
 		`SERVER = "서버 주소"`,
 		``,
 		`# 카카오 발송용 Table`,
