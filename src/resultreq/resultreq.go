@@ -4,9 +4,11 @@ import (
 	//	"bytes"
 	//"database/sql"
 	"encoding/json"
-	"fmt"
+	"io"
+	"net/http"
 
 	//kakao "kakaojson"
+	"webclient/src/common"
 	"webclient/src/config"
 	"webclient/src/resulttable"
 
@@ -18,6 +20,8 @@ import (
 	s "strings"
 	"sync"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 var Interval int32 = 10000
@@ -40,39 +44,27 @@ func gerResultProcess(wg *sync.WaitGroup) {
 
 	defer wg.Done()
 
-	var db = databasepool.DB
+	//var db = databasepool.DB
 	var conf = config.Conf
 
 	var errlog = config.Stdlog
 	var procCnt int = 0
 
-	resStrs := []string{}
-	resValues := []interface{}{}
+	resValues := []common.ResColumn{}
 
-	resIns := `INSERT IGNORE INTO ` + conf.RESULTTABLE + `(
-  MSGID, AD_FLAG, BUTTON1, BUTTON2, 
-  BUTTON3, BUTTON4, BUTTON5, 
-  CODE, IMAGE_LINK, IMAGE_URL, 
-  KIND, MESSAGE, MESSAGE_TYPE, 
-  MSG, MSG_SMS, ONLY_SMS, P_COM, 
-  P_INVOICE, PHN, PROFILE, REG_DT, 
-  REMARK1, REMARK2, REMARK3, 
-  REMARK4, REMARK5, RES_DT, RESERVE_DT, 
-  RESULT, S_CODE, SMS_KIND, SMS_LMS_TIT, 
-  SMS_SENDER, SYNC, TMPL_ID, 
-  WIDE, SUPPLEMENT, PRICE, CURRENCY_TYPE, TITLE, HEADER, CAROUSEL, ATT_ITEMS
-) values %s`
-
-	resp, err := config.Client.R().
-		SetHeaders(map[string]string{"userid": conf.USERID}).
-		Post(conf.SERVER + "result")
-
+	req, err := http.NewRequest("POST", conf.SERVER+"result", nil)
 	if err != nil {
-		errlog.Println("메시지 결과 요청 오류 : ", err)
+		errlog.Println("DHNCenter /result API 발송 request 만들기 실패 ", err.Error())
+	}
+	req.Header.Set("userid", conf.USERID)
+
+	resp, err := config.GoClient.Do(req)
+	if err != nil {
+		errlog.Println("resultreq.go -> 메시지 결과 요청 오류 : ", err)
 	} else {
 
-		if resp.StatusCode() == 200 {
-			str := resp.Body()
+		if resp.StatusCode == 200 {
+			str, _ := io.ReadAll(resp.Body)
 			var result []resulttable.ResultTable
 			json.Unmarshal([]byte(str), &result)
 
@@ -87,91 +79,108 @@ func gerResultProcess(wg *sync.WaitGroup) {
 			}
 
 			for i, _ := range result {
-				resStrs = append(resStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-				resValues = append(resValues, result[i].Msgid)
-				resValues = append(resValues, result[i].Ad_flag)
-				resValues = append(resValues, result[i].Button1)
-				resValues = append(resValues, result[i].Button2)
-				resValues = append(resValues, result[i].Button3)
-				resValues = append(resValues, result[i].Button4)
-				resValues = append(resValues, result[i].Button5)
-				resValues = append(resValues, result[i].Code)
-				resValues = append(resValues, result[i].Image_link)
-				resValues = append(resValues, result[i].Image_url)
-				resValues = append(resValues, result[i].Kind)
-				resValues = append(resValues, result[i].Message)
-				resValues = append(resValues, result[i].Message_type)
-				resValues = append(resValues, result[i].Msg)
-				resValues = append(resValues, result[i].Msg_sms)
-				resValues = append(resValues, result[i].Only_sms)
-				resValues = append(resValues, result[i].P_com)
-				resValues = append(resValues, result[i].P_invoice)
-				resValues = append(resValues, result[i].Phn)
-				resValues = append(resValues, result[i].Profile)
-				resValues = append(resValues, result[i].Reg_dt)
-				resValues = append(resValues, result[i].Remark1)
-				resValues = append(resValues, result[i].Remark2)
-				resValues = append(resValues, result[i].Remark3)
-				resValues = append(resValues, result[i].Remark4)
-				resValues = append(resValues, result[i].Remark5)
-				resValues = append(resValues, result[i].Reserve_dt)
-
+				resValue := common.ResColumn{}
+				resValue.Msgid = result[i].Msgid
+				resValue.Ad_flag = result[i].Ad_flag
+				resValue.Button1 = result[i].Button1
+				resValue.Button2 = result[i].Button2
+				resValue.Button3 = result[i].Button3
+				resValue.Button4 = result[i].Button4
+				resValue.Button5 = result[i].Button5
+				resValue.Code = result[i].Code
+				resValue.Image_link = result[i].Image_link
+				resValue.Image_url = result[i].Image_url
+				resValue.Kind = result[i].Kind
+				resValue.Message = result[i].Message
+				resValue.Message_type = result[i].Message_type
+				resValue.Msg = result[i].Msg
+				resValue.Msg_sms = result[i].Msg_sms
+				resValue.Only_sms = result[i].Only_sms
+				resValue.P_com = result[i].P_com
+				resValue.P_invoice = result[i].P_invoice
+				resValue.Phn = result[i].Phn
+				resValue.Profile = result[i].Profile
+				resValue.Reg_dt = result[i].Reg_dt
+				resValue.Remark1 = result[i].Remark1
+				resValue.Remark2 = result[i].Remark2
+				resValue.Remark3 = result[i].Remark3
+				resValue.Remark4 = result[i].Remark4
+				resValue.Remark5 = result[i].Remark5
+				resValue.Res_dt = "now()"
+				resValue.Reserve_dt = result[i].Reserve_dt
 				if s.EqualFold(result[i].Code, "0000") || s.EqualFold(result[i].Code, "MS03") || s.EqualFold(result[i].Code, "K000") {
-					resValues = append(resValues, "Y")
+					resValue.Result = "Y"
 				} else {
-					resValues = append(resValues, "N")
+					resValue.Result = "N"
 				}
+				resValue.S_code = result[i].S_code
+				resValue.Sms_kind = result[i].Sms_kind
+				resValue.Sms_lms_tit = result[i].Sms_lms_tit
+				resValue.Sms_sender = result[i].Sms_sender
+				resValue.Sync = result[i].Sync
+				resValue.Tmpl_id = result[i].Tmpl_id
+				resValue.Wide = result[i].Wide
+				resValue.Supplement = result[i].Supplement
+				resValue.Price = result[i].Price
+				resValue.Currency_type = result[i].Currency_type
+				resValue.Title = result[i].Title
+				resValue.Header = result[i].Header
+				resValue.Carousel = result[i].Carousel
+				resValue.Att_items = result[i].Att_items
 
-				resValues = append(resValues, result[i].S_code)
-				resValues = append(resValues, result[i].Sms_kind)
-				resValues = append(resValues, result[i].Sms_lms_tit)
-				resValues = append(resValues, result[i].Sms_sender)
-				resValues = append(resValues, result[i].Sync)
-				resValues = append(resValues, result[i].Tmpl_id)
-				resValues = append(resValues, result[i].Wide)
-				resValues = append(resValues, result[i].Supplement)
-				resValues = append(resValues, result[i].Price)
-				resValues = append(resValues, result[i].Currency_type)
-				resValues = append(resValues, result[i].Title)
-				resValues = append(resValues, result[i].Header)
-				resValues = append(resValues, result[i].Carousel)
-				resValues = append(resValues, result[i].Att_items)
+				resValues = append(resValues, resValue)
 
-				if len(resStrs) >= 1000 {
-					stmt := fmt.Sprintf(resIns, s.Join(resStrs, ","))
-					_, err := db.Exec(stmt, resValues...)
-
-					if err != nil {
-						errlog.Println("Result Table Insert 처리 중 오류 발생 " + err.Error())
-					}
-
-					resStrs = nil
-					resValues = nil
+				if len(resValues) >= 1000 {
+					insertResData(resValues)
+					resValues = []common.ResColumn{}
 				}
 				procCnt++
+
+			}
+			if len(resValues) > 0 {
+				insertResData(resValues)
 			}
 
-			if len(resStrs) > 0 {
-				stmt := fmt.Sprintf(resIns, s.Join(resStrs, ","))
-				_, err := db.Exec(stmt, resValues...)
-
-				if err != nil {
-					errlog.Println("Result Table Insert 처리 중 오류 발생 " + err.Error())
-				}
-
-				resStrs = nil
-				resValues = nil
-			}
 			if procCnt > 0 {
 				errlog.Println("결과 수신 완료 : ", procCnt, " 건 처리")
 			}
 
 		} else {
-			errlog.Println("결과 서버 요청 처리 중 오류 발생 ", resp)
+			errlog.Println("resultreq.go -> 결과 서버 요청 처리 중 오류 발생 ", resp)
 		}
 
 		//}
 	}
 	//}
 
+}
+
+func insertResData(resValues []common.ResColumn) {
+	tx, err := databasepool.DB.Begin()
+	if err != nil {
+		config.Stdlog.Println("resultreq.go / insertResData / ", config.Conf.RESULTTABLE, " / 트랜젝션 초기화 실패 ", err)
+	}
+	defer tx.Rollback()
+	resStmt, err := tx.Prepare(pq.CopyIn(config.Conf.RESULTTABLE, common.GetResColumnPq(common.ResColumn{})...))
+	if err != nil {
+		config.Stdlog.Println("resultreq.go / insertResData / ", config.Conf.RESULTTABLE, " / resStmt 초기화 실패 ", err)
+		return
+	}
+	for _, data := range resValues {
+		_, err := resStmt.Exec(data.Msgid, data.Ad_flag, data.Button1, data.Button2, data.Button3, data.Button4, data.Button5, data.Code, data.Image_link, data.Image_url, data.Kind, data.Message, data.Message_type, data.Msg, data.Msg_sms, data.Only_sms, data.P_com, data.P_invoice, data.Phn, data.Profile, data.Reg_dt, data.Remark1, data.Remark2, data.Remark3, data.Remark4, data.Remark5, data.Reserve_dt, data.Result, data.S_code, data.Sms_kind, data.Sms_lms_tit, data.Sms_sender, data.Sync, data.Tmpl_id, data.Wide, data.Supplement, data.Price, data.Currency_type, data.Title, data.Header, data.Carousel, data.Att_items)
+		if err != nil {
+			config.Stdlog.Println("resultreq.go / insertResData / ", config.Conf.RESULTTABLE, " / resStmt personal Exec ", err)
+		}
+	}
+
+	_, err = resStmt.Exec()
+	if err != nil {
+		resStmt.Close()
+		config.Stdlog.Println("resultreq.go / insertResData / ", config.Conf.RESULTTABLE, " / resStmt Exec ", err)
+	}
+	resStmt.Close()
+	err = tx.Commit()
+	if err != nil {
+		config.Stdlog.Println("resultreq.go / insertResData / ", config.Conf.RESULTTABLE, " / resStmt commit ", err)
+	}
 }
