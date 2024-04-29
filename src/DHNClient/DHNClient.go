@@ -10,6 +10,7 @@ import (
 
 	"webclient/src/config"
 	"webclient/src/databasepool"
+	"webclient/src/resultreq"
 	"webclient/src/sendrequest"
 
 	//"time"
@@ -115,6 +116,6 @@ func resultProc() {
 
 	go sendrequest.Process()
 
-	//go resultreq.ResultReqProc()
+	go resultreq.ResultReqProc()
 
 }

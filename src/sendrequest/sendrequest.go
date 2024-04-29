@@ -183,6 +183,7 @@ func sendProcess(group_no string) {
 			}
 
 		}
+		masterData["host"] = true
 		finalRows = append(finalRows, masterData)
 		procCount++
 	}
