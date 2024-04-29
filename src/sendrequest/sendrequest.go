@@ -3,6 +3,8 @@ package sendrequest
 import (
 	//"bytes"
 	"database/sql"
+	"reflect"
+	"webclient/src/common"
 	"webclient/src/config"
 	"webclient/src/databasepool"
 
@@ -111,17 +113,23 @@ func sendProcess(group_no string) {
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
 		//errlog.Fatal(err)
-		config.Stdlog.Println(conf.REQTABLE + " Table - Select 오류 : ( " + group_no + " ) : " + err.Error())
+		stdlog.Println("sendProcess 쿼리 에러 group_no : ", group_no)
+		stdlog.Println("sendProcess 쿼리 에러 query : ", reqsql)
+		stdlog.Println("sendProcess 쿼리 에러 : ", err)
+		//stdlog.Println(conf.REQTABLE + " Table - Select 오류 : ( " + group_no + " ) : " + err.Error())
 		return
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
 		//errlog.Fatal(err)
-		config.Stdlog.Println(conf.REQTABLE + " Table - ColumnType 조회 오류" + err.Error())
+		errlog.Println("sendProcess 컬럼 초기화 에러 group_no : ", group_no)
+		errlog.Println("sendProcess 컬럼 초기화 에러 : ", err)
+		//errlog.Println(conf.REQTABLE + " Table - ColumnType 조회 오류" + err.Error())
 		return
 	}
 	count := len(columnTypes)
+	initScanArgs := common.InitDatabaseColumn(columnTypes, count)
 
 	finalRows := []interface{}{}
 
@@ -130,31 +138,18 @@ func sendProcess(group_no string) {
 	procCount = 0
 	var startNow = time.Now()
 	var startTime = fmt.Sprintf("%02d:%02d:%02d", startNow.Hour(), startNow.Minute(), startNow.Second())
+
 	stdlog.Printf(" ( %s ) 처리 시작 - %s ", startTime, group_no)
+
 	for reqrows.Next() {
-		scanArgs := make([]interface{}, count)
-
-		for i, v := range columnTypes {
-
-			switch v.DatabaseTypeName() {
-			case "VARCHAR", "TEXT", "UUID", "TIMESTAMP":
-				scanArgs[i] = new(sql.NullString)
-				break
-			case "BOOL":
-				scanArgs[i] = new(sql.NullBool)
-				break
-			case "INT4":
-				scanArgs[i] = new(sql.NullInt64)
-				break
-			default:
-				scanArgs[i] = new(sql.NullString)
-			}
-		}
+		scanArgs := initScanArgs
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
 			//errlog.Fatal(err)
-			config.Stdlog.Println(conf.REQTABLE + " Table - Scan 오류" + err.Error())
+			errlog.Println("sendProcess 컬럼 스캔 에러 group_no : ", group_no)
+			errlog.Println("sendProcess 컬럼 스캔 에러 : ", err)
+			//errlog.Println(conf.REQTABLE + " Table - Scan 오류" + err.Error())
 		}
 
 		masterData := map[string]interface{}{}
@@ -192,11 +187,14 @@ func sendProcess(group_no string) {
 			}
 
 		}
-		masterData["price"] = fmt.Sprintf("%d", masterData["price"])
+
+		for key, value := range masterData {
+			stdlog.Printf("Key: %s, Value: %v, Type: %s\n", key, value, reflect.TypeOf(value))
+		}
+		//masterData["price"] = fmt.Sprintf("%d", masterData["price"])
 		finalRows = append(finalRows, masterData)
 		procCount++
 	}
-	fmt.Println(finalRows)
 	resp, err := config.Client.R().
 		SetHeaders(map[string]string{"Content-Type": "application/json", "userid": conf.USERID}).
 		SetBody(finalRows).
