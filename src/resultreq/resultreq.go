@@ -54,7 +54,7 @@ func gerResultProcess(wg *sync.WaitGroup) {
 
 	req, err := http.NewRequest("POST", conf.SERVER+"result", nil)
 	if err != nil {
-		errlog.Println("DHNCenter /result API 발송 request 만들기 실패 ", err.Error())
+		errlog.Println("resultreq.go -> DHNCenter /result API 발송 request 만들기 실패 ", err.Error())
 	}
 	req.Header.Set("userid", conf.USERID)
 
