@@ -167,7 +167,7 @@ func insertResData(resValues []common.ResColumn) {
 		return
 	}
 	for _, data := range resValues {
-		_, err := resStmt.Exec(data.Msgid, data.Ad_flag, data.Button1, data.Button2, data.Button3, data.Button4, data.Button5, data.Code, data.Image_link, data.Image_url, data.Kind, data.Message, data.Message_type, data.Msg, data.Msg_sms, data.Only_sms, data.P_com, data.P_invoice, data.Phn, data.Profile, data.Reg_dt, data.Remark1, data.Remark2, data.Remark3, data.Remark4, data.Remark5, data.Reserve_dt, data.Result, data.S_code, data.Sms_kind, data.Sms_lms_tit, data.Sms_sender, data.Sync, data.Tmpl_id, data.Wide, data.Supplement, data.Price, data.Currency_type, data.Title, data.Header, data.Carousel, data.Att_items)
+		_, err := resStmt.Exec(data.Msgid, data.Ad_flag, data.Button1, data.Button2, data.Button3, data.Button4, data.Button5, data.Code, data.Image_link, data.Image_url, data.Kind, data.Message, data.Message_type, data.Msg, data.Msg_sms, data.Only_sms, data.P_com, data.P_invoice, data.Phn, data.Profile, data.Reg_dt, data.Remark1, data.Remark2, data.Remark3, data.Remark4, data.Remark5, data.Res_dt, data.Reserve_dt, data.Result, data.S_code, data.Sms_kind, data.Sms_lms_tit, data.Sms_sender, data.Sync, data.Tmpl_id, data.Wide, data.Supplement, data.Price, data.Currency_type, data.Title, data.Header, data.Carousel, data.Att_items)
 		if err != nil {
 			config.Stdlog.Println("resultreq.go / insertResData / ", config.Conf.RESULTTABLE, " / resStmt personal Exec ", err)
 		}
