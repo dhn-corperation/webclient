@@ -195,8 +195,6 @@ func sendProcess(group_no string) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("userid", conf.USERID)
 
-	errlog.Println("userid : ", conf.USERID)
-
 	resp, err := config.GoClient.Do(req)
 	if err != nil {
 		errlog.Println("sendProcess 메시지 서버 호출 오류 : ", err)
