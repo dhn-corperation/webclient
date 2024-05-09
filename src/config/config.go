@@ -7,7 +7,7 @@ import (
 	"time"
 
 	ini "github.com/BurntSushi/toml"
-	"github.com/go-resty/resty"
+	"github.com/go-resty/resty/v2"
 	rotatelogs "github.com/lestrrat/go-file-rotatelogs"
 	"gopkg.in/tomb.v2"
 )
@@ -35,7 +35,7 @@ var IsRunning bool = true
 var Client *resty.Client
 
 func InitConfig() {
-	homedir, _ := os.UserHomeDir();
+	homedir, _ := os.UserHomeDir()
 	path := homedir + "/DHNClient/logs/DHNClient"
 	//path := "./log/DHNClient"
 	loc, _ := time.LoadLocation("Asia/Seoul")
@@ -61,11 +61,18 @@ func InitConfig() {
 }
 
 func readConfig() Config {
-	homedir, _ := os.UserHomeDir();
+	homedir, _ := os.UserHomeDir()
 	var configfile = homedir + "/DHNClient/config.ini"
 	//var configfile = "./config.ini"
 	_, err := os.Stat(configfile)
 	if err != nil {
+
+		err := createConfig(configfile)
+		if err != nil {
+			Stdlog.Println("Config file create fail")
+		}
+		Stdlog.Println("config.ini 생성완료 작성을 해주세요.")
+
 		fmt.Println("Config file is missing : ", configfile)
 	}
 
@@ -77,4 +84,38 @@ func readConfig() Config {
 	}
 
 	return result
+}
+
+func createConfig(dirName string) error {
+	fo, err := os.Create(dirName)
+	if err != nil {
+		return fmt.Errorf("Config file create fail: %w", err)
+	}
+	configData := []string{
+		`#실행 환경 설정 파일`,
+		``,
+		`# DHN Server`,
+		`USERID = "업체ID"`,
+		`SERVER = "DHN서버 경로"`,
+		``,
+		`#DB정보`,
+		`USER = "오라클 사용자"`,
+		`PASSWORD = "오라클 PW"`,
+		`CONNECTSTRING = "oracle ip:Port/XE"`,
+		``,
+		`#테이블명`,
+		`SC_TRAN = "SC_TRAN"`,
+		`SC_TRAN_IMD = "SC_TRAN_IMD"`,
+		`SC_LOG = "SC_LOG"`,
+		``,
+		`TRAN_FROM = "6"`,
+		`TRAN_TO = "22"`,
+		``,
+	}
+
+	for _, line := range configData {
+		fmt.Fprintln(fo, line)
+	}
+
+	return nil
 }

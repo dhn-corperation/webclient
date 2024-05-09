@@ -8,7 +8,7 @@ import (
 	_ "github.com/godror/godror"
 
 	//"log"
-	"config"
+	"goclient_knou/src/config"
 	//"fmt"
 	//iconv "github.com/djimenez/iconv-go"
 )

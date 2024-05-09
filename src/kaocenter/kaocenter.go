@@ -2,13 +2,11 @@ package kaocenter
 
 import (
 	"bytes"
-	"config"
 	"fmt"
+	"goclient_knou/src/config"
 	"io"
-	"io/ioutil"
+
 	//db "kaodatabasepool"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -16,6 +14,9 @@ import (
 	"path/filepath"
 	s "strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 var centerClient *http.Client = &http.Client{
@@ -53,7 +54,7 @@ func FT_Upload(c *gin.Context) {
 
 	resp, err := upload(CENTER_SERVER+"ft/image", param)
 
-	bytes, _ := ioutil.ReadAll(resp.Body)
+	bytes, _ := io.ReadAll(resp.Body)
 	c.Data(http.StatusOK, "application/json", bytes)
 }
 
@@ -79,7 +80,7 @@ func FT_Wide_Upload(c *gin.Context) {
 
 	resp, err := upload(CENTER_SERVER+"ft/wide/image", param)
 
-	bytes, _ := ioutil.ReadAll(resp.Body)
+	bytes, _ := io.ReadAll(resp.Body)
 	c.Data(http.StatusOK, "application/json", bytes)
 }
 
@@ -105,7 +106,7 @@ func AT_Image(c *gin.Context) {
 
 	resp, err := upload(CENTER_SERVER+"at/image", param)
 
-	bytes, _ := ioutil.ReadAll(resp.Body)
+	bytes, _ := io.ReadAll(resp.Body)
 	c.Data(http.StatusOK, "application/json", bytes)
 }
 
@@ -161,7 +162,6 @@ func MMS_Image(c *gin.Context) {
 
 	if len(newFileName1) > 0 || len(newFileName2) > 0 || len(newFileName2) > 0 {
 
-		
 		param := map[string]io.Reader{
 			"userid": s.NewReader(userID),
 		}
@@ -178,11 +178,11 @@ func MMS_Image(c *gin.Context) {
 		}
 
 		resp, err := upload(CENTER_SERVER+"mms/image", param)
-		
+
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			bytes, _ := ioutil.ReadAll(resp.Body)
+			bytes, _ := io.ReadAll(resp.Body)
 			c.Data(http.StatusOK, "application/json", bytes)
 		}
 	} else {

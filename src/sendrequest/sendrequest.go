@@ -2,12 +2,12 @@ package sendrequest
 
 import (
 	//"bytes"
-	"config"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"database/sql"
-	"databasepool"
+	"goclient_knou/src/config"
+	"goclient_knou/src/databasepool"
 
 	"fmt"
 	"io"

@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
+	"goclient_knou/src/resultreq"
 	"os"
 	"os/signal"
-	"resultreq"
 	"syscall"
 
-	"config"
-	"databasepool"
-	"sendrequest"
-	"sendrequestimd"
+	"goclient_knou/src/config"
+	"goclient_knou/src/databasepool"
+	"goclient_knou/src/sendrequest"
+	"goclient_knou/src/sendrequestimd"
 
 	//"time"
 
@@ -74,7 +74,7 @@ func main() {
 
 	config.InitConfig()
 	//time.Sleep(time.Millisecond * time.Duration(1000))
-	
+
 	databasepool.InitDatabase()
 	//time.Sleep(time.Millisecond * time.Duration(1000))
 
