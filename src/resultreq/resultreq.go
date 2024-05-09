@@ -7,12 +7,12 @@ import (
 	"fmt"
 
 	//kakao "kakaojson"
-	"config"
+	"goclient_seowon/src/config"
 
-	"databasepool"
+	"goclient_seowon/src/databasepool"
 	//"io/ioutil"
 	//"net/http"
-	"resulttable"
+	"goclient_seowon/src/resulttable"
 
 	//"strconv"
 	s "strings"

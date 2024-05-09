@@ -2,9 +2,9 @@ package sendrequest
 
 import (
 	//"bytes"
-	"config"
 	"database/sql"
-	"databasepool"
+	"goclient_seowon/src/config"
+	"goclient_seowon/src/databasepool"
 
 	//"encoding/json"
 	"fmt"
@@ -23,19 +23,19 @@ func Process() {
 
 	for {
 		if procCnt < 5 {
-			
+
 			var count int
-			
+
 			cnterr := databasepool.DB.QueryRow("select count(1) as cnt from " + config.Conf.REQTABLE + " r where  group_no is null and ( r.reserve_dt < DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') or r.reserve_dt = '00000000000000') limit 1").Scan(&count)
 
 			if cnterr != nil {
 				config.Stdlog.Println("Request Table - select 오류 : " + cnterr.Error())
 			} else {
 
-				if count > 0 {			
+				if count > 0 {
 					var startNow = time.Now()
 					var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-		
+
 					updateRows, err := databasepool.DB.Exec("update " + config.Conf.REQTABLE + " r set group_no = '" + group_no + "' where  group_no is null and ( r.reserve_dt < DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') or r.reserve_dt = '00000000000000') limit 1000")
 					if err != nil {
 						config.Stdlog.Println("Request Table - Group No Update 오류 : " + err.Error())
@@ -44,8 +44,8 @@ func Process() {
 						if err1 != nil {
 							rowcnt = 0
 							config.Stdlog.Println("Request Table - RowsAffected 오류 : " + err.Error())
-						} 
-			
+						}
+
 						if rowcnt > 0 {
 							go sendProcess(group_no)
 						}
@@ -111,7 +111,7 @@ func sendProcess(group_no string) {
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
 		//errlog.Fatal(err)
-		config.Stdlog.Println(conf.REQTABLE + " Table - Select 오류 : ( " + group_no + " ) : "  + err.Error())
+		config.Stdlog.Println(conf.REQTABLE + " Table - Select 오류 : ( " + group_no + " ) : " + err.Error())
 		return
 	}
 

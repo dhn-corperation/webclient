@@ -8,10 +8,10 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"config"
-	"databasepool"
-	"resultreq"
-	"sendrequest"
+	"goclient_seowon/src/config"
+	"goclient_seowon/src/databasepool"
+	"goclient_seowon/src/resultreq"
+	"goclient_seowon/src/sendrequest"
 
 	//"time"
 
@@ -78,24 +78,24 @@ func main() {
 	databasepool.InitDatabase()
 
 	var rLimit syscall.Rlimit
-	
+
 	rLimit.Max = 50000
-    rLimit.Cur = 50000
-    
-    err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-    
-    if err != nil {
-        config.Stdlog.Println("Error Setting Rlimit ", err)
-    }
-    
-    err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-    
-    if err != nil {
-        config.Stdlog.Println("Error Getting Rlimit ", err)
-    }
-    
-    config.Stdlog.Println("Rlimit Final", rLimit)
-    
+	rLimit.Cur = 50000
+
+	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+
+	if err != nil {
+		config.Stdlog.Println("Error Setting Rlimit ", err)
+	}
+
+	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+
+	if err != nil {
+		config.Stdlog.Println("Error Getting Rlimit ", err)
+	}
+
+	config.Stdlog.Println("Rlimit Final", rLimit)
+
 	srv, err := daemon.New(name, description, daemon.SystemDaemon, dependencies...)
 	if err != nil {
 		config.Stdlog.Println("Error: ", err)

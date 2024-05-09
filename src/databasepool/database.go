@@ -1,11 +1,13 @@
 package databasepool
 
 import (
-	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
+
+	_ "github.com/go-sql-driver/mysql"
+
 	//"log"
-	"config"
 	"fmt"
+	"goclient_seowon/src/config"
 )
 
 var DB *sql.DB
