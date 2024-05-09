@@ -3,21 +3,34 @@ package databasepool
 import (
 	"database/sql"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/alexbrainman/odbc"
+	//_ "github.com/go-sql-driver/mysql"
 
 	//"log"
-	"fmt"
-	"goclient_seowon/src/config"
+	"config"
+	//"fmt"
+	//iconv "github.com/djimenez/iconv-go"
 )
 
 var DB *sql.DB
 
 func InitDatabase() {
-	db, err := sql.Open(config.Conf.DB, config.Conf.DBURL)
+	//fmt.Println(config.Conf.DBINFOR)
+	//config.Stdlog.Println("DB INFOR : " + config.Conf.DBINFOR)
+	db, err := sql.Open("odbc", "" + config.Conf.DBINFOR)
 	if err != nil {
-		fmt.Println(err)
+		config.Stdlog.Println("DB Open Error : " + err.Error())
+		panic(err)
 	}
-
+	config.Stdlog.Println("DB Open OK !!")
+	//fmt.Println(db)
+	err = db.Ping()
+	if err != nil {
+		config.Stdlog.Println(config.Conf.DBINFOR, "DB Ping Error : " + err.Error())
+		//fmt.Println(config.Conf.DBINFOR, "DB Ping Error : " + err.Error())
+		panic(err)
+	}
+	config.Stdlog.Println("DB Ping !!")
 	db.SetMaxIdleConns(10)
 	db.SetMaxOpenConns(10)
 

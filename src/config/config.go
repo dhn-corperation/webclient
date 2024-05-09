@@ -7,14 +7,13 @@ import (
 	"time"
 
 	ini "github.com/BurntSushi/toml"
-	"github.com/go-resty/resty/v2"
+	"github.com/go-resty/resty"
 	rotatelogs "github.com/lestrrat/go-file-rotatelogs"
 	"gopkg.in/tomb.v2"
 )
 
 type Config struct {
-	DB          string
-	DBURL       string
+	DBINFOR     string
 	USERID      string
 	SERVER      string
 	REQTABLE    string
@@ -57,49 +56,6 @@ func InitConfig() {
 
 func readConfig() Config {
 	var configfile = "/root/DHNClient/config.ini"
-	//var configfile = "./config.ini"
-	_, err := os.Stat(configfile)
-	if err != nil {
-		fmt.Println("Config file is missing : ", configfile)
-	}
-
-	var result Config
-	_, err1 := ini.DecodeFile(configfile, &result)
-
-	if err1 != nil {
-		fmt.Println("Config file read error : ", err1)
-	}
-
-	return result
-}
-
-func InitGenieConfig() {
-	path := "/root/GenieClient/log/GenieClient"
-	//path := "./log/DHNClient"
-	loc, _ := time.LoadLocation("Asia/Seoul")
-	writer, err := rotatelogs.New(
-		fmt.Sprintf("%s-%s.log", path, "%Y-%m-%d"),
-		rotatelogs.WithLocation(loc),
-		rotatelogs.WithMaxAge(-1),
-		rotatelogs.WithRotationCount(7),
-	)
-
-	if err != nil {
-		log.Fatalf("Failed to Initialize Log File %s", err)
-	}
-
-	log.SetOutput(writer)
-	stdlog := log.New(os.Stdout, "INFO -> ", log.Ldate|log.Ltime)
-	stdlog.SetOutput(writer)
-	Stdlog = stdlog
-
-	Conf = readGenieConfig()
-
-	Client = resty.New()
-}
-
-func readGenieConfig() Config {
-	var configfile = "/root/GenieClient/config.ini"
 	//var configfile = "./config.ini"
 	_, err := os.Stat(configfile)
 	if err != nil {

@@ -10,11 +10,12 @@ import (
 
 	"config"
 	"databasepool"
+	"kaocenter"
 	"resultreq"
+	"kfriendreq"
 	"sendrequest"
-
 	//"time"
-
+	"github.com/gin-gonic/gin"
 	"github.com/takama/daemon"
 )
 
@@ -74,28 +75,29 @@ func (service *Service) Manage() (string, error) {
 func main() {
 
 	config.InitConfig()
-
+	//time.Sleep(time.Millisecond * time.Duration(1000))
 	databasepool.InitDatabase()
+	//time.Sleep(time.Millisecond * time.Duration(1000))
 
 	var rLimit syscall.Rlimit
-	
+
 	rLimit.Max = 50000
-    rLimit.Cur = 50000
-    
-    err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-    
-    if err != nil {
-        config.Stdlog.Println("Error Setting Rlimit ", err)
-    }
-    
-    err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-    
-    if err != nil {
-        config.Stdlog.Println("Error Getting Rlimit ", err)
-    }
-    
-    config.Stdlog.Println("Rlimit Final", rLimit)
-    
+	rLimit.Cur = 50000
+
+	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+
+	if err != nil {
+		config.Stdlog.Println("Error Setting Rlimit ", err)
+	}
+
+	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+
+	if err != nil {
+		config.Stdlog.Println("Error Getting Rlimit ", err)
+	}
+
+	config.Stdlog.Println("Rlimit Final", rLimit)
+
 	srv, err := daemon.New(name, description, daemon.SystemDaemon, dependencies...)
 	if err != nil {
 		config.Stdlog.Println("Error: ", err)
@@ -112,10 +114,35 @@ func main() {
 }
 
 func resultProc() {
-	config.Stdlog.Println("DHN Client 시작")
+	config.Stdlog.Println("DHN Client start !!")
 
 	go sendrequest.Process()
-
+	//return
 	go resultreq.ResultReqProc()
 
+	go kfriendreq.FriendInfoReqProc()
+
+	r := gin.New()
+	r.Use(gin.Recovery())
+	//r := gin.Default()
+
+	r.GET("/", func(c *gin.Context) {
+		//time.Sleep(30 * time.Second)
+		c.String(200, "Server Alive ")
+	})
+
+	r.GET("/status", func(c *gin.Context) {
+		sendrequest.DisplayStatus = true
+		c.String(200, "Server Alive ")
+	})
+
+	r.POST("/ft/image", kaocenter.FT_Upload)
+
+	r.POST("/ft/wide/image", kaocenter.FT_Wide_Upload)
+
+	r.POST("/at/image", kaocenter.AT_Image)
+
+	r.POST("/mms/image", kaocenter.MMS_Image)
+
+	r.Run(":8484")
 }
