@@ -30,6 +30,7 @@ require (
 	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/karalabe/xgo v0.0.0-20191115072854-c5ccff8648a7 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lestrrat/go-envload v0.0.0-20180220120943-6ed08b54a570 // indirect
