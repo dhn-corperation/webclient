@@ -7,7 +7,7 @@ import (
 	//_ "github.com/go-sql-driver/mysql"
 
 	//"log"
-	"config"
+	"goclient_seowon/src/config"
 	//"fmt"
 	//iconv "github.com/djimenez/iconv-go"
 )
@@ -17,7 +17,7 @@ var DB *sql.DB
 func InitDatabase() {
 	//fmt.Println(config.Conf.DBINFOR)
 	//config.Stdlog.Println("DB INFOR : " + config.Conf.DBINFOR)
-	db, err := sql.Open("odbc", "" + config.Conf.DBINFOR)
+	db, err := sql.Open("odbc", ""+config.Conf.DBINFOR)
 	if err != nil {
 		config.Stdlog.Println("DB Open Error : " + err.Error())
 		panic(err)
@@ -26,7 +26,7 @@ func InitDatabase() {
 	//fmt.Println(db)
 	err = db.Ping()
 	if err != nil {
-		config.Stdlog.Println(config.Conf.DBINFOR, "DB Ping Error : " + err.Error())
+		config.Stdlog.Println(config.Conf.DBINFOR, "DB Ping Error : "+err.Error())
 		//fmt.Println(config.Conf.DBINFOR, "DB Ping Error : " + err.Error())
 		panic(err)
 	}

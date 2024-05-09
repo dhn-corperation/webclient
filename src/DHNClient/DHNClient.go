@@ -8,12 +8,13 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"config"
-	"databasepool"
-	"kaocenter"
-	"resultreq"
-	"kfriendreq"
-	"sendrequest"
+	"goclient_seowon/src/config"
+	"goclient_seowon/src/databasepool"
+	"goclient_seowon/src/kaocenter"
+	"goclient_seowon/src/kfriendreq"
+	"goclient_seowon/src/resultreq"
+	"goclient_seowon/src/sendrequest"
+
 	//"time"
 	"github.com/gin-gonic/gin"
 	"github.com/takama/daemon"
