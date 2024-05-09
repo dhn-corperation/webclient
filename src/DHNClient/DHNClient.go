@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"resultreq"
 	"syscall"
 
-	_ "github.com/go-sql-driver/mysql"
-
-	"webclient/src/config"
-	"webclient/src/databasepool"
-	"webclient/src/resultreq"
-	"webclient/src/sendrequest"
+	"config"
+	"databasepool"
+	"sendrequest"
+	"sendrequestimd"
 
 	//"time"
 
@@ -20,7 +19,7 @@ import (
 
 const (
 	name        = "DHNClient"
-	description = "대형네트웍스 카카오 발송 Client"
+	description = "대형네트웍스 발송 Client"
 )
 
 var dependencies = []string{"DHNClient.service"}
@@ -74,8 +73,10 @@ func (service *Service) Manage() (string, error) {
 func main() {
 
 	config.InitConfig()
-
+	//time.Sleep(time.Millisecond * time.Duration(1000))
+	
 	databasepool.InitDatabase()
+	//time.Sleep(time.Millisecond * time.Duration(1000))
 
 	var rLimit syscall.Rlimit
 
@@ -112,10 +113,38 @@ func main() {
 }
 
 func resultProc() {
-	config.Stdlog.Println("DHN Client 시작")
+	config.Stdlog.Println("DHN Client start !!")
 
 	go sendrequest.Process()
 
+	go sendrequestimd.ImdProcess()
+	//return
 	go resultreq.ResultReqProc()
 
+	//go kfriendreq.FriendInfoReqProc()
+	/*
+		r := gin.New()
+		r.Use(gin.Recovery())
+		//r := gin.Default()
+
+		r.GET("/", func(c *gin.Context) {
+			//time.Sleep(30 * time.Second)
+			c.String(200, "Server Alive ")
+		})
+
+		r.GET("/status", func(c *gin.Context) {
+			sendrequest.DisplayStatus = true
+			c.String(200, "Server Alive ")
+		})
+
+		r.POST("/ft/image", kaocenter.FT_Upload)
+
+		r.POST("/ft/wide/image", kaocenter.FT_Wide_Upload)
+
+		r.POST("/at/image", kaocenter.AT_Image)
+
+		r.POST("/mms/image", kaocenter.MMS_Image)
+
+		r.Run(":8484")
+	*/
 }

@@ -37,7 +37,21 @@ type Reqtable struct {
 	Price        string `json:"price"`
 	Currencytype string `json:"currencytype"`
 	Title        string `json:"title"`
-	Header       string `json:"header"`
-	Carousel     string `json:"carousel"`
-	Att_items    string `json:"att_items"`
+}
+
+
+type FriendReqtable struct {
+	Profilekey          string `json:"sw_profile"`
+	Linkcode     		 string `json:"link_code"`
+	TalkType     		 string `json:"talk_type"`
+	AtTemplateCode     string `json:"at_template_code"`
+	AtMsgBody     	 string `json:"at_msg_body"`
+	Imagelink    		 string `json:"ft_main_image_link"`
+	Imageurl     		 string `json:"ft_main_image_url"`
+	Button1      	     string `json:"button1"`
+	Button2      		 string `json:"button2"`
+	Button3      	 	 string `json:"button3"`
+	Button4      		 string `json:"button4"`
+	Button5      		 string `json:"button5"`
+	ApprovalDate  		 string `json:"approval_dt"`
 }

@@ -1,4 +1,4 @@
-package sendrequest
+package sendrequestimd
 
 import (
 	//"bytes"
@@ -27,7 +27,7 @@ var procCnt int = 0
 var DisplayStatus bool = false
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
-func Process() {
+func ImdProcess() {
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -42,7 +42,7 @@ func Process() {
 
 			var count int
 
-			cnterr := databasepool.DB.QueryRow(" select count(1) as cnt from " + conf.SC_TRAN + " where TR_SENDSTAT = '0' and tr_senddate <= sysdate and tr_modified is null and to_number(to_char(sysdate, 'hh24')) BETWEEN " + conf.TRAN_FROM + " AND (" + conf.TRAN_TO + "-1) and rownum = 1").Scan(&count)
+			cnterr := databasepool.DB.QueryRow(" select count(1) as cnt from " + conf.SC_TRAN_IMD + " where TR_SENDSTAT = '0' and tr_senddate <= sysdate and tr_modified is null  and rownum = 1").Scan(&count)
 			//fmt.Println("select count(1) as cnt from " + conf.SC_TRAN + " where TR_SENDSTAT = '0' and tr_senddate <= sysdate and to_number(to_char(sysdate + 0.69, 'hh24')) BETWEEN " + conf.TRAN_FROM + " AND (" + conf.TRAN_TO + "-1) and rownum = 1")
 			if cnterr != nil {
 				config.Stdlog.Println("Request Table - select error : " + cnterr.Error())
@@ -85,8 +85,8 @@ func updateReqeust(group_no string) {
 	var conf = config.Conf
 	config.Stdlog.Println("Group No Update - ", group_no)
 	gudQuery := `
-	update ` + conf.SC_TRAN + `  set TR_SENDSTAT = '9', tr_modified = to_date('` + group_no + `', 'yyyymmddhh24miss')  where  TR_NUM in (
-		select r.TR_NUM from ` + conf.SC_TRAN + ` r  where  TR_SENDSTAT = '0' and tr_senddate <= sysdate and rownum <= 1000 and tr_modified is null  
+	update ` + conf.SC_TRAN_IMD + `  set TR_SENDSTAT = '9', tr_modified = to_date('` + group_no + `', 'yyyymmddhh24miss')  where  TR_NUM in (
+		select r.TR_NUM from ` + conf.SC_TRAN_IMD + ` r  where  TR_SENDSTAT = '0' and tr_senddate <= sysdate and rownum <= 1000 and tr_modified is null  
 	)
 	`
 	_, err = tx.Query(gudQuery)
@@ -137,8 +137,8 @@ func sendProcess(group_no string) {
 
 	reqsql := `SELECT st.*
 , to_char(sysdate, 'yyyy-mm-dd hh24:mi:ss') as curr_date 
-,RANK() OVER (PARTITION BY  st.TR_PHONE , st.TR_CALLBACK , st.TR_MSG ORDER BY st.TR_NUM) AS mst_cnt
-FROM ` + conf.SC_TRAN + ` st 
+,RANK() OVER (PARTITION BY st.TR_PHONE , st.TR_CALLBACK , st.TR_MSG ORDER BY st.TR_NUM) AS mst_cnt
+FROM ` + conf.SC_TRAN_IMD + ` st 
 WHERE TR_SENDSTAT  = '9'
 and tr_modified = to_date('` + group_no + `', 'yyyymmddhh24miss')
 `
@@ -200,7 +200,7 @@ and tr_modified = to_date('` + group_no + `', 'yyyymmddhh24miss')
 			masterData["remark4"] = trEtc4.String
 			masterData["remark5"] = trEtc5.String
 			masterData["pinvoice"] = trId.String
-			masterData["pcom"] = "D"
+			masterData["pcom"] = "I"
 			masterData["profile"] = fmt.Sprintf("%x", nonce)
 			masterData["smskind"] = smsKind
 			msgT, nonce, _ = AES256GSMEncrypt([]byte(SecretKey), []byte(smslmstit), nonce)
@@ -212,9 +212,9 @@ and tr_modified = to_date('` + group_no + `', 'yyyymmddhh24miss')
 			//errlog.Println("Req ; ", reg_dt.String, message_type.String)
 			finalRows = append(finalRows, masterData)
 		} else {
-			tx.Exec("update " + conf.SC_TRAN + " set tr_sendstat='2', tr_rsltdate = sysdate, tr_modified = sysdate, tr_rsltstat = '-1', tr_net = '0' where tr_num = '" + trNum.String + "'")
-			tx.Exec("insert into " + conf.SC_LOG + " select * from " + conf.SC_TRAN + " st where st.tr_num = '" + trNum.String + "'")
-			tx.Exec("delete from " + conf.SC_TRAN + " where tr_num = '" + trNum.String + "'")
+			tx.Exec("update " + conf.SC_TRAN_IMD + " set tr_sendstat='2', tr_rsltdate = sysdate, tr_modified = sysdate, tr_rsltstat = '-1', tr_net = '0' where tr_num = '" + trNum.String + "'")
+			tx.Exec("insert into " + conf.SC_LOG + " select * from " + conf.SC_TRAN_IMD + " st where st.tr_num = '" + trNum.String + "'")
+			tx.Exec("delete from " + conf.SC_TRAN_IMD + " where tr_num = '" + trNum.String + "'")
 		}
 		procCount++
 	}
@@ -231,14 +231,14 @@ and tr_modified = to_date('` + group_no + `', 'yyyymmddhh24miss')
 		errlog.Println("Message Server error !! - ", err)
 		//tx, _ := databasepool.DB.Begin()
 		//tx.Exec("update sc_tran set tr_modified = sysdate, tr_sendstat = '3' where tr_sendstat = '9' ")
-		tx.Exec("update " + conf.SC_TRAN + " set tr_sendstat='2', tr_rsltdate = sysdate, tr_modified = sysdate, tr_rsltstat = '11' where tr_sendstat = '9' and tr_modified = to_date('" + group_no + "', 'yyyymmddhh24miss')")
-		tx.Exec("insert into " + conf.SC_LOG + " select * from " + conf.SC_TRAN + " st where st.tr_sendstat = '9' and tr_modified = to_date('" + group_no + "', 'yyyymmddhh24miss')")
-		tx.Exec("delete from " + conf.SC_TRAN + " st where st.tr_sendstat = '9' and tr_modified = to_date('" + group_no + "', 'yyyymmddhh24miss')")
+		tx.Exec("update " + conf.SC_TRAN_IMD + " set tr_sendstat='2', tr_rsltdate = sysdate, tr_modified = sysdate, tr_rsltstat = '11' where tr_sendstat = '9' and tr_modified = to_date('" + group_no + "', 'yyyymmddhh24miss')")
+		tx.Exec("insert into " + conf.SC_LOG + " select from " + conf.SC_TRAN_IMD + " st where st.tr_sendstat = '9' and tr_modified = to_date('" + group_no + "', 'yyyymmddhh24miss')")
+		tx.Exec("delete from " + conf.SC_TRAN_IMD + " st where st.tr_sendstat = '9' and tr_modified = to_date('" + group_no + "', 'yyyymmddhh24miss')")
 		//tx.Commit()
 	} else {
 
 		if resp.StatusCode() == 200 {
-			tx.Exec("update " + conf.SC_TRAN + " set tr_sendstat = '1' where tr_sendstat = '9' and tr_modified = to_date('" + group_no + "', 'yyyymmddhh24miss')")
+			tx.Exec("update " + conf.SC_TRAN_IMD + " set tr_sendstat = '1' where tr_sendstat = '9' and tr_modified = to_date('" + group_no + "', 'yyyymmddhh24miss')")
 			//tx.Exec("insert into sc_log select * from sc_tran where tr_sendstat = 'W' and tr_etc6 = '" + group_no + "'")
 			//tx.Exec("delete from sc_tran where tr_sendstat = 'W' and tr_etc6 = '" + group_no + "'")
 		} else {
