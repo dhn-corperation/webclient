@@ -41,4 +41,7 @@ type ResultTable struct {
 	Price         string `json:"price"`
 	Currency_type string `json:"currency_type"`
 	Title         string `json:"title"`
+	Header        string `json:"header"`
+	Carousel      string `json:"carousel"`
+	Att_items     string `json:"att_items"`
 }

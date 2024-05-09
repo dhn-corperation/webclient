@@ -7,22 +7,18 @@ import (
 	"time"
 
 	ini "github.com/BurntSushi/toml"
-	"github.com/go-resty/resty/v2"
+	"github.com/go-resty/resty"
 	rotatelogs "github.com/lestrrat/go-file-rotatelogs"
 	"gopkg.in/tomb.v2"
 )
 
 type Config struct {
-	USER          string
-	PASSWORD      string
-	CONNECTSTRING string
-	USERID        string
-	SERVER        string
-	SC_TRAN       string
-	SC_TRAN_IMD   string
-	SC_LOG        string
-	TRAN_FROM     string
-	TRAN_TO       string
+	DB          string
+	DBURL       string
+	USERID      string
+	SERVER      string
+	REQTABLE    string
+	RESULTTABLE string
 }
 
 type Proc struct {
@@ -35,15 +31,14 @@ var IsRunning bool = true
 var Client *resty.Client
 
 func InitConfig() {
-	homedir, _ := os.UserHomeDir()
-	path := homedir + "/DHNClient/logs/DHNClient"
+	path := "/root/DHNClient/log/DHNClient"
 	//path := "./log/DHNClient"
 	loc, _ := time.LoadLocation("Asia/Seoul")
 	writer, err := rotatelogs.New(
 		fmt.Sprintf("%s-%s.log", path, "%Y-%m-%d"),
 		rotatelogs.WithLocation(loc),
 		rotatelogs.WithMaxAge(-1),
-		rotatelogs.WithRotationCount(-1),
+		rotatelogs.WithRotationCount(7),
 	)
 
 	if err != nil {
@@ -61,18 +56,10 @@ func InitConfig() {
 }
 
 func readConfig() Config {
-	homedir, _ := os.UserHomeDir()
-	var configfile = homedir + "/DHNClient/config.ini"
+	var configfile = "/root/DHNClient/config.ini"
 	//var configfile = "./config.ini"
 	_, err := os.Stat(configfile)
 	if err != nil {
-
-		err := createConfig(configfile)
-		if err != nil {
-			Stdlog.Println("Config file create fail")
-		}
-		Stdlog.Println("config.ini 생성완료 작성을 해주세요.")
-
 		fmt.Println("Config file is missing : ", configfile)
 	}
 
@@ -86,36 +73,46 @@ func readConfig() Config {
 	return result
 }
 
-func createConfig(dirName string) error {
-	fo, err := os.Create(dirName)
+
+func InitGenieConfig() {
+	path := "/root/GenieClient/log/GenieClient"
+	//path := "./log/DHNClient"
+	loc, _ := time.LoadLocation("Asia/Seoul")
+	writer, err := rotatelogs.New(
+		fmt.Sprintf("%s-%s.log", path, "%Y-%m-%d"),
+		rotatelogs.WithLocation(loc),
+		rotatelogs.WithMaxAge(-1),
+		rotatelogs.WithRotationCount(7),
+	)
+
 	if err != nil {
-		return fmt.Errorf("Config file create fail: %w", err)
-	}
-	configData := []string{
-		`#실행 환경 설정 파일`,
-		``,
-		`# DHN Server`,
-		`USERID = "업체ID"`,
-		`SERVER = "DHN서버 경로"`,
-		``,
-		`#DB정보`,
-		`USER = "오라클 사용자"`,
-		`PASSWORD = "오라클 PW"`,
-		`CONNECTSTRING = "oracle ip:Port/XE"`,
-		``,
-		`#테이블명`,
-		`SC_TRAN = "SC_TRAN"`,
-		`SC_TRAN_IMD = "SC_TRAN_IMD"`,
-		`SC_LOG = "SC_LOG"`,
-		``,
-		`TRAN_FROM = "6"`,
-		`TRAN_TO = "22"`,
-		``,
+		log.Fatalf("Failed to Initialize Log File %s", err)
 	}
 
-	for _, line := range configData {
-		fmt.Fprintln(fo, line)
+	log.SetOutput(writer)
+	stdlog := log.New(os.Stdout, "INFO -> ", log.Ldate|log.Ltime)
+	stdlog.SetOutput(writer)
+	Stdlog = stdlog
+
+	Conf = readGenieConfig()
+
+	Client = resty.New()
+}
+
+func readGenieConfig() Config {
+	var configfile = "/root/GenieClient/config.ini"
+	//var configfile = "./config.ini"
+	_, err := os.Stat(configfile)
+	if err != nil {
+		fmt.Println("Config file is missing : ", configfile)
 	}
 
-	return nil
+	var result Config
+	_, err1 := ini.DecodeFile(configfile, &result)
+
+	if err1 != nil {
+		fmt.Println("Config file read error : ", err1)
+	}
+
+	return result
 }

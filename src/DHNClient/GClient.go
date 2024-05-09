@@ -19,11 +19,11 @@ import (
 )
 
 const (
-	name        = "DHNClient"
-	description = "대형네트웍스 카카오 발송 Client"
+	name        = "GClient"
+	description = "지니 카카오 발송 Client"
 )
 
-var dependencies = []string{"DHNClient.service"}
+var dependencies = []string{"GClient.service"}
 
 var resultTable string
 
@@ -33,7 +33,7 @@ type Service struct {
 
 func (service *Service) Manage() (string, error) {
 
-	usage := "Usage: DHNClient install | remove | start | stop | status"
+	usage := "Usage: GClient install | remove | start | stop | status"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
@@ -73,7 +73,7 @@ func (service *Service) Manage() (string, error) {
 
 func main() {
 
-	config.InitConfig()
+	config.InitGenieConfig()
 
 	databasepool.InitDatabase()
 
@@ -112,7 +112,7 @@ func main() {
 }
 
 func resultProc() {
-	config.Stdlog.Println("DHN Client 시작")
+	config.Stdlog.Println("Genie Client 시작")
 
 	go sendrequest.Process()
 
