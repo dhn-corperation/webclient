@@ -177,6 +177,7 @@ func createConfig(dirName string) error {
 		`PORT = "DB 포트"`,
 		`DBID = "DB 사용자 id"`,
 		`DBPW = "DB 사용자 password"`,
+		`DBNAME = "DB 이름"`,
 		``,
 		`# DHN Server`,
 		`USERID = "ID명"`,
