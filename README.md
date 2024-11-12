@@ -1,6 +1,7 @@
 # webclient
-## 종류
-#### GClient, DHNClient
+## Service
+- GClient
+- DHNClient
 
 
 ## Go lang Version
