@@ -18,12 +18,22 @@ import (
 	"github.com/takama/daemon"
 )
 
+// const (
+// 	name        = "DHNClient_m"
+// 	description = "마트톡 카카오 발송 프로그램"
+// )
+
+// const (
+// 	name        = "DHNClient_g"
+// 	description = "올지니 카카오 발송 프로그램"
+// )
+
 const (
-	name        = "DHNClient"
-	description = "대형네트웍스 카카오 발송 Client"
+	name        = "DHNClient_o"
+	description = "오투오 카카오 발송 프로그램"
 )
 
-var dependencies = []string{"DHNClient.service"}
+var dependencies = []string{name+".service"}
 
 var resultTable string
 
@@ -33,7 +43,7 @@ type Service struct {
 
 func (service *Service) Manage() (string, error) {
 
-	usage := "Usage: DHNClient install | remove | start | stop | status"
+	usage := "Usage: "+name+" install | remove | start | stop | status"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
@@ -112,7 +122,7 @@ func main() {
 }
 
 func resultProc() {
-	config.Stdlog.Println("DHN Client 시작")
+	config.Stdlog.Println(name, " 시작")
 
 	go sendrequest.Process()
 
