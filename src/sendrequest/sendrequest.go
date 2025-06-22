@@ -38,11 +38,6 @@ func Process() {
 
 					updateRows, err := databasepool.DB.Exec("update "+config.Conf.REQTABLE+" r set group_no = '"+group_no+`' where group_no is null
 						and ( r.reserve_dt < DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') or r.reserve_dt = '00000000000000')
-						order by
-							case
-								when r.reserve_dt = '00000000000000' then r.reg_dt
-								else str_to_date(r.reserve_dt, '%Y%m%d%H%i%s')
-							end asc
 						limit 1000`)
 					if err != nil {
 						config.Stdlog.Println("Request Table - Group No Update 오류 : " + err.Error())

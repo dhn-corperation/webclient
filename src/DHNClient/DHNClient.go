@@ -18,10 +18,10 @@ import (
 	"github.com/takama/daemon"
 )
 
-// const (
-// 	name        = "DHNClient_m"
-// 	description = "마트톡 카카오 발송 프로그램"
-// )
+const (
+	name        = "DHNClient_m"
+	description = "마트톡 카카오 발송 프로그램"
+)
 
 // const (
 // 	name        = "DHNClient_g"
@@ -33,10 +33,10 @@ import (
 // 	description = "오투오 카카오 발송 프로그램"
 // )
 
-const (
-	name        = "DHNClient_s"
-	description = "싸다고 카카오 발송 프로그램"
-)
+// const (
+// 	name        = "DHNClient_s"
+// 	description = "싸다고 카카오 발송 프로그램"
+// )
 
 var dependencies = []string{name+".service"}
 
