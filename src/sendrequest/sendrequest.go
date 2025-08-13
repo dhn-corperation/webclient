@@ -60,6 +60,23 @@ func Process() {
 }
 
 func sendProcess(group_no string) {
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("sendProcess panic error : ", r, " / group_no : ", group_no)
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("sendProcess send ping to DB / group_no : ", group_no)
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
 
 	procCnt++
 	var db = databasepool.DB
@@ -78,6 +95,7 @@ func sendProcess(group_no string) {
 		"image_link":    "imagelink",
 		"image_url":     "imageurl",
 		"message_type":  "messagetype",
+		"kind":			 "kind",
 		"msg":           "msg",
 		"msg_sms":       "msgsms",
 		"only_sms":      "onlysms",
@@ -104,6 +122,7 @@ func sendProcess(group_no string) {
 		"title":         "title",
 		"header":        "header",
 		"carousel":      "carousel",
+		"attachments":   "attachments",
 		"att_items":     "att_items",
 		"att_coupon":    "att_coupon",
 	}
@@ -114,14 +133,14 @@ func sendProcess(group_no string) {
 	if err != nil {
 		//errlog.Fatal(err)
 		config.Stdlog.Println(conf.REQTABLE + " Table - Select 오류 : ( " + group_no + " ) : " + err.Error())
-		return
+		panic(err)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
 		//errlog.Fatal(err)
 		config.Stdlog.Println(conf.REQTABLE + " Table - ColumnType 조회 오류" + err.Error())
-		return
+		panic(err)
 	}
 	count := len(columnTypes)
 
@@ -210,9 +229,14 @@ func sendProcess(group_no string) {
 
 		if resp.StatusCode() == 200 {
 			databasepool.DB.Exec("delete from " + conf.REQTABLE + " where group_no = '" + group_no + "'")
-
+		} else if resp.StatusCode() == 404 {
+			stdlog.Println("허용되지 않은 사용자 입니다.")
 		} else {
 			stdlog.Println("서버 처리 오류 !! ( ", resp, " )")
+			time.Sleep(5 * time.Second)
+			stdlog.Println("그룹 넘버 초기화 시작 group_no : ", group_no)
+			databasepool.DB.Exec("update " + conf.REQTABLE + "set group_no = null where group_no = '" + group_no + "'")
+			stdlog.Println("그룹 넘버 초기화 끝 group_no : ", group_no)
 		}
 	}
 	stdlog.Printf(" ( %s ) 처리끝 : %d 건 처리 ( process cnt : %d ) - %s", startTime, procCount, procCnt, group_no)
