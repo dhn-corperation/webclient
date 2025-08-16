@@ -52,6 +52,8 @@ func Process() {
 							go sendProcess(group_no)
 						}
 					}
+				} else {
+					time.Sleep(50 * time.Millisecond)
 				}
 			}
 		}
