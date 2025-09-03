@@ -25,6 +25,9 @@ func Process() {
 		if procCnt < 5 {
 			var count int
 
+			now := time.Now()
+			reserveFormat := now.Format("20060102150405")
+
 			tickSql := `
 				select
 					count(1) as cnt
@@ -32,10 +35,10 @@ func Process() {
 					` + config.Conf.REQTABLE + `
 				where
 					group_no is null
-					and (((reserve_dt < DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') or reserve_dt = '00000000000000') and upper(MESSAGE_TYPE) <> 'D1') or upper(MESSAGE_TYPE) = 'D1')
+					and ((reserve_dt < ? and upper(MESSAGE_TYPE) <> 'D1') or upper(MESSAGE_TYPE) = 'D1')
 				limit 1`
 
-			cnterr := databasepool.DB.QueryRow(tickSql).Scan(&count)
+			cnterr := databasepool.DB.QueryRow(tickSql, reserveFormat).Scan(&count)
 
 			if cnterr != nil {
 				config.Stdlog.Println("Request Table - select 오류 : " + cnterr.Error())
@@ -52,11 +55,11 @@ func Process() {
 							group_no = ?
 						where
 							group_no is null
-							and (((reserve_dt < DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') or reserve_dt = '00000000000000') and upper(MESSAGE_TYPE) <> 'D1') or upper(MESSAGE_TYPE) = 'D1')
+							and ((reserve_dt < ? and upper(MESSAGE_TYPE) <> 'D1') or upper(MESSAGE_TYPE) = 'D1')
 						limit 1
 					`
 
-					updateRows, err := databasepool.DB.Exec(updSql, group_no)
+					updateRows, err := databasepool.DB.Exec(updSql, group_no, reserveFormat)
 					if err != nil {
 						config.Stdlog.Println("Request Table - Group No Update 오류 : " + err.Error())
 					} else {
