@@ -35,7 +35,7 @@ func Process() {
 					` + config.Conf.REQTABLE + `
 				where
 					group_no is null
-					and ((reserve_dt < ? and upper(MESSAGE_TYPE) <> 'D1') or upper(MESSAGE_TYPE) = 'D1')
+					and ((reserve_dt < ? and left(upper(MESSAGE_TYPE), 1) <> 'D') or left(upper(MESSAGE_TYPE), 1) = 'D')
 				limit 1`
 
 			cnterr := databasepool.DB.QueryRow(tickSql, reserveFormat).Scan(&count)
@@ -55,9 +55,8 @@ func Process() {
 							group_no = ?
 						where
 							group_no is null
-							and ((reserve_dt < ? and upper(MESSAGE_TYPE) <> 'D1') or upper(MESSAGE_TYPE) = 'D1')
-						limit 1
-					`
+							and ((reserve_dt < ? and left(upper(MESSAGE_TYPE), 1) <> 'D') or left(upper(MESSAGE_TYPE), 1) = 'D')
+						limit 1000`
 
 					updateRows, err := databasepool.DB.Exec(updSql, group_no, reserveFormat)
 					if err != nil {
