@@ -28,8 +28,11 @@ const (
 	// name        = "DHNClient_o"
 	// description = "오투오 카카오 발송 프로그램"
 
-// 	name        = "DHNClient_s"
-// 	description = "싸다고 카카오 발송 프로그램"
+	// name        = "DHNClient_p"
+	// description = "스피드톡 카카오 발송 프로그램"
+
+	// name        = "DHNClient_s"
+	// description = "싸다고 카카오 발송 프로그램"
 )
 
 var dependencies = []string{name+".service"}
