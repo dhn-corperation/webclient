@@ -116,7 +116,7 @@ func gerResultProcess(wg *sync.WaitGroup) {
 				resValues = append(resValues, result[i].Remark5)
 				resValues = append(resValues, result[i].Reserve_dt)
 
-				if s.EqualFold(result[i].Code, "0000") || s.EqualFold(result[i].Code, "MS03") || s.EqualFold(result[i].Code, "K000") {
+				if s.EqualFold(result[i].Code, "0000") || s.EqualFold(result[i].Code, "MS03") || s.EqualFold(result[i].Code, "K000") || s.EqualFold(result[i].Kind, "F") {
 					resValues = append(resValues, "Y")
 				} else {
 					resValues = append(resValues, "N")
