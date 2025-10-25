@@ -77,6 +77,7 @@ func gerResultProcess(wg *sync.WaitGroup) {
 			json.Unmarshal([]byte(str), &result)
 
 			if len(result) >= 1 {
+				errlog.Println("결과 수신 완료 : ", len(result), " 건 처리 시작")
 				Interval = 500
 			} else {
 				if Interval >= 10000 {
@@ -163,7 +164,7 @@ func gerResultProcess(wg *sync.WaitGroup) {
 				resValues = nil
 			}
 			if procCnt > 0 {
-				errlog.Println("결과 수신 완료 : ", procCnt, " 건 처리")
+				errlog.Println("결과 수신 완료 : ", procCnt, " 건 처리 끝")
 			}
 
 		} else {
