@@ -19,7 +19,7 @@ func InitDatabase() {
 	}
 
 	db.SetMaxIdleConns(10)
-	db.SetMaxOpenConns(10)
+	db.SetMaxOpenConns(20)
 
 	DB = db
 
