@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	// name        = "DHNClient_m"
-	// description = "마트톡 카카오 발송 프로그램"
+	name        = "DHNClient_m"
+	description = "마트톡 카카오 발송 프로그램"
 
 	// name        = "DHNClient_g"
 	// description = "올지니 카카오 발송 프로그램"
@@ -31,8 +31,8 @@ const (
 	// name        = "DHNClient_p"
 	// description = "스피드톡 카카오 발송 프로그램"
 
-	name        = "DHNClient_s"
-	description = "싸다고 카카오 발송 프로그램"
+	// name        = "DHNClient_s"
+	// description = "싸다고 카카오 발송 프로그램"
 )
 
 var dependencies = []string{name+".service"}
