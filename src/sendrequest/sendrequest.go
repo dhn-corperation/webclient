@@ -63,8 +63,11 @@ func Process() {
 
 						if rowcnt > 0 {
 							procCnt++
+							saveProcCnt := procCnt
+							config.Stdlog.Println("알/브 처리 시작 건수 :",rowcnt ,"/ group_no :", group_no, "/ procCnt :", saveProcCnt)
 							go func() {
 								defer func() {
+									config.Stdlog.Println("알/브 처리 끝끝 건수 :",rowcnt, "/ group_no :", group_no, "/ procCnt :", saveProcCnt)
 									procCnt--
 								}()
 								sendProcess(group_no, procCnt)
@@ -127,8 +130,11 @@ func ProcessBroadcast() {
 
 						if rowcnt > 0 {
 							procCnt++
+							saveProcCnt := procCnt
+							config.Stdlog.Println("동보 처리 시작 건수 :",rowcnt ,"/ group_no :", group_no, "/ procCnt :", saveProcCnt)
 							go func() {
 								defer func() {
+									config.Stdlog.Println("동보 처리 끝끝 건수 :",rowcnt, "/ group_no :", group_no, "/ procCnt :", saveProcCnt)
 									procCnt--
 								}()
 								sendProcess(group_no, procCnt)
@@ -232,9 +238,7 @@ func sendProcess(group_no string, procCnt int) {
 	var isContinue bool
 	var procCount int
 	procCount = 0
-	var startNow = time.Now()
-	var startTime = fmt.Sprintf("%02d:%02d:%02d", startNow.Hour(), startNow.Minute(), startNow.Second())
-	stdlog.Printf(" ( %s ) 처리 시작 - %s ", startTime, group_no)
+
 	for reqrows.Next() {
 		scanArgs := make([]interface{}, count)
 
@@ -322,5 +326,4 @@ func sendProcess(group_no string, procCnt int) {
 			stdlog.Println("그룹 넘버 초기화 끝 group_no : ", group_no)
 		}
 	}
-	stdlog.Printf(" ( %s ) 처리끝 : %d 건 처리 ( process cnt : %d ) - %s", startTime, procCount, procCnt, group_no)
 }
