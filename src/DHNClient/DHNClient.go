@@ -3,41 +3,50 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/signal"
+	"log"
+	"context"
 	"syscall"
-
-	_ "github.com/go-sql-driver/mysql"
+	"reflect"
+	"os/signal"
 
 	"webclient/src/config"
 	"webclient/src/databasepool"
 	"webclient/src/resultreq"
 	"webclient/src/sendrequest"
 
-	//"time"
-
 	"github.com/takama/daemon"
+	"github.com/fasthttp/router"
+	"github.com/valyala/fasthttp"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
 	name        = "DHNClient_m"
 	description = "마트톡 카카오 발송 프로그램"
+	port  		= ":3310"
 
 	// name        = "DHNClient_g"
 	// description = "올지니 카카오 발송 프로그램"
+	// port  		= ":3320"
 
 	// name        = "DHNClient_o"
 	// description = "오투오 카카오 발송 프로그램"
+	// port  		= ":3330"
 
 	// name        = "DHNClient_p"
 	// description = "스피드톡 카카오 발송 프로그램"
+	// port  		= ":3340"
 
 	// name        = "DHNClient_s"
 	// description = "싸다고 카카오 발송 프로그램"
+	// port  		= ":3350"
 )
 
 var dependencies = []string{name+".service"}
 
 var resultTable string
+
+var cc context.CancelFunc
 
 type Service struct {
 	daemon.Daemon
@@ -124,12 +133,57 @@ func main() {
 }
 
 func resultProc() {
+	var conf = config.Conf
+
+	val := reflect.ValueOf(conf)
+	typ := reflect.TypeOf(conf)
+
 	config.Stdlog.Println(name, " 시작")
+	config.Stdlog.Println("------------------------------------------------------------------------------")
 
-	go sendrequest.Process()
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		value := val.Field(i)
+		config.Stdlog.Println(fmt.Sprintf("%s: %v", field.Name, value.Interface()))
+	}
 
-	go sendrequest.ProcessBroadcast()
+	config.Stdlog.Println("------------------------------------------------------------------------------")
 
-	go resultreq.ResultReqProc()
+	ctx, cancel := context.WithCancel(context.Background())
+	cc = cancel
+
+	go sendrequest.Process(ctx)
+
+	go sendrequest.ProcessBroadcast(ctx)
+
+	go resultreq.ResultReqProc(ctx)
+
+	r := router.New()
+
+	r.GET("/", func(c *fasthttp.RequestCtx) {
+		c.SetStatusCode(fasthttp.StatusOK)
+		c.SetBodyString("정상 수신 완료 - " + name + "\n")
+	})
+
+	r.GET("/allstop", func(c *fasthttp.RequestCtx){
+		uid := string(c.QueryArgs().Peek("uid"))
+		if uid == "dhn" {
+			config.Stdlog.Println("전체 종료 시작")
+			cc()
+			cc = nil
+			c.SetContentType("application/json")
+			c.SetStatusCode(fasthttp.StatusOK)
+			c.SetBody([]byte("전체 종료 수신 완료\n"))
+		} else {
+			c.SetContentType("application/json")
+			c.SetStatusCode(fasthttp.StatusOK)
+			c.SetBody([]byte("전체 종료 수신 실패\n"))
+		}
+	})
+
+	if err := fasthttp.ListenAndServe(port, r.Handler); err != nil {
+		config.Stdlog.Println("fasthttp 실행 실패")
+		log.Fatal("fasthttp 실행 실패")
+	}
 
 }

@@ -3,6 +3,7 @@ package sendrequest
 import (
 	"fmt"
 	"time"
+	"context"
 	s "strings"
 	"database/sql"
 	
@@ -12,139 +13,156 @@ import (
 )
 
 
-func Process() {
-	config.Stdlog.Println("일반 프로세스 시작")
+func Process(ctx context.Context) {
+	config.Stdlog.Println("알/브 발송 프로세스 시작")
 	var procCnt int = 0
 	for {
-		if procCnt < 5 {
-			var count int
+		select {
+			case <- ctx.Done():
+				config.Stdlog.Println("알/브 - process가 15초 후에 종료")
+			    time.Sleep(15 * time.Second)
+			    config.Stdlog.Println("알/브 - process 종료 완료")
+				return
+			default:
+				if procCnt < 5 {
+					var count int
 
-			now := time.Now()
-			reserveFormat := now.Format("20060102150405")
+					now := time.Now()
+					reserveFormat := now.Format("20060102150405")
 
-			tickSql := `
-				select
-					count(1) as cnt
-				from
-					` + config.Conf.REQTABLE + `
-				where
-					group_no is null
-					and reserve_dt < ?`
-
-			cnterr := databasepool.DB.QueryRow(tickSql, reserveFormat).Scan(&count)
-
-			if cnterr != nil {
-				config.Stdlog.Println("Request Table - select 오류 : " + cnterr.Error())
-			} else {
-
-				if count > 0 {
-					var startNow = time.Now()
-					var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-
-					updSql := `
-						update
+					tickSql := `
+						select
+							count(1) as cnt
+						from
 							` + config.Conf.REQTABLE + `
-						set
-							group_no = ?
 						where
 							group_no is null
-							and reserve_dt < ?
-						limit 1000`
+							and reserve_dt < ?`
 
-					updateRows, err := databasepool.DB.Exec(updSql, group_no, reserveFormat)
-					if err != nil {
-						config.Stdlog.Println("Request Table - Group No Update 오류 : " + err.Error())
+					cnterr := databasepool.DB.QueryRow(tickSql, reserveFormat).Scan(&count)
+
+					if cnterr != nil {
+						config.Stdlog.Println("Request Table - select 오류 : " + cnterr.Error())
 					} else {
-						rowcnt, err1 := updateRows.RowsAffected()
-						if err1 != nil {
-							rowcnt = 0
-							config.Stdlog.Println("Request Table - RowsAffected 오류 : " + err.Error())
-						}
 
-						if rowcnt > 0 {
-							procCnt++
-							saveProcCnt := procCnt
-							config.Stdlog.Println("알/브 처리 시작 건수 :",rowcnt ,"/ group_no :", group_no, "/ procCnt :", saveProcCnt)
-							go func() {
-								defer func() {
-									config.Stdlog.Println("알/브 처리 끝끝 건수 :",rowcnt, "/ group_no :", group_no, "/ procCnt :", saveProcCnt)
-									procCnt--
-								}()
-								sendProcess(group_no, procCnt)
-							}()
+						if count > 0 {
+							var startNow = time.Now()
+							var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
+
+							updSql := `
+								update
+									` + config.Conf.REQTABLE + `
+								set
+									group_no = ?
+								where
+									group_no is null
+									and reserve_dt < ?
+								limit 1000`
+
+							updateRows, err := databasepool.DB.Exec(updSql, group_no, reserveFormat)
+							if err != nil {
+								config.Stdlog.Println("Request Table - Group No Update 오류 : " + err.Error())
+							} else {
+								rowcnt, err1 := updateRows.RowsAffected()
+								if err1 != nil {
+									rowcnt = 0
+									config.Stdlog.Println("Request Table - RowsAffected 오류 : " + err.Error())
+								}
+
+								if rowcnt > 0 {
+									procCnt++
+									saveProcCnt := procCnt
+									config.Stdlog.Println("알/브 처리 시작 건수 :",rowcnt ,"/ group_no :", group_no, "/ procCnt :", saveProcCnt)
+									go func() {
+										defer func() {
+											config.Stdlog.Println("알/브 처리 끝끝 건수 :",rowcnt, "/ group_no :", group_no, "/ procCnt :", saveProcCnt)
+											procCnt--
+										}()
+										sendProcess(group_no, procCnt)
+									}()
+								}
+							}
+						} else {
+							time.Sleep(50 * time.Millisecond)
 						}
 					}
-				} else {
-					time.Sleep(50 * time.Millisecond)
 				}
-			}
 		}
+		
 	}
 }
 
-func ProcessBroadcast() {
+func ProcessBroadcast(ctx context.Context) {
 	config.Stdlog.Println("동보 프로세스 시작")
 	var procCnt int = 0
 	for {
-		if procCnt < 1 {
-			var count int
+		select {
+			case <- ctx.Done():
+				config.Stdlog.Println("동보 - process가 15초 후에 종료")
+			    time.Sleep(15 * time.Second)
+			    config.Stdlog.Println("동보 - process 종료 완료")
+				return
+			default:
+				if procCnt < 1 {
+					var count int
 
-			tickSql := `
-				select
-					count(1) as cnt
-				from
-					` + config.Conf.REQTABLE + `
-				where
-					group_no is null
-					and upper(left(MESSAGE_TYPE, 1)) = 'D'`
-
-			cnterr := databasepool.DB.QueryRow(tickSql).Scan(&count)
-
-			if cnterr != nil {
-				config.Stdlog.Println("Request Table - select 오류 : " + cnterr.Error())
-			} else {
-
-				if count > 0 {
-					var startNow = time.Now()
-					var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-
-					updSql := `
-						update
+					tickSql := `
+						select
+							count(1) as cnt
+						from
 							` + config.Conf.REQTABLE + `
-						set
-							group_no = ?
 						where
 							group_no is null
-							and upper(left(MESSAGE_TYPE, 1)) = 'D'
-						limit 10`
+							and upper(left(MESSAGE_TYPE, 1)) = 'D'`
 
-					updateRows, err := databasepool.DB.Exec(updSql, group_no)
-					if err != nil {
-						config.Stdlog.Println("Request Table - Group No Update 오류 : " + err.Error())
+					cnterr := databasepool.DB.QueryRow(tickSql).Scan(&count)
+
+					if cnterr != nil {
+						config.Stdlog.Println("Request Table - select 오류 : " + cnterr.Error())
 					} else {
-						rowcnt, err1 := updateRows.RowsAffected()
-						if err1 != nil {
-							rowcnt = 0
-							config.Stdlog.Println("Request Table - RowsAffected 오류 : " + err.Error())
-						}
 
-						if rowcnt > 0 {
-							procCnt++
-							saveProcCnt := procCnt
-							config.Stdlog.Println("동보 처리 시작 건수 :",rowcnt ,"/ group_no :", group_no, "/ procCnt :", saveProcCnt)
-							go func() {
-								defer func() {
-									config.Stdlog.Println("동보 처리 끝끝 건수 :",rowcnt, "/ group_no :", group_no, "/ procCnt :", saveProcCnt)
-									procCnt--
-								}()
-								sendProcess(group_no, procCnt)
-							}()
+						if count > 0 {
+							var startNow = time.Now()
+							var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
+
+							updSql := `
+								update
+									` + config.Conf.REQTABLE + `
+								set
+									group_no = ?
+								where
+									group_no is null
+									and upper(left(MESSAGE_TYPE, 1)) = 'D'
+								limit 10`
+
+							updateRows, err := databasepool.DB.Exec(updSql, group_no)
+							if err != nil {
+								config.Stdlog.Println("Request Table - Group No Update 오류 : " + err.Error())
+							} else {
+								rowcnt, err1 := updateRows.RowsAffected()
+								if err1 != nil {
+									rowcnt = 0
+									config.Stdlog.Println("Request Table - RowsAffected 오류 : " + err.Error())
+								}
+
+								if rowcnt > 0 {
+									procCnt++
+									saveProcCnt := procCnt
+									config.Stdlog.Println("동보 처리 시작 건수 :",rowcnt ,"/ group_no :", group_no, "/ procCnt :", saveProcCnt)
+									go func() {
+										defer func() {
+											config.Stdlog.Println("동보 처리 끝끝 건수 :",rowcnt, "/ group_no :", group_no, "/ procCnt :", saveProcCnt)
+											procCnt--
+										}()
+										sendProcess(group_no, procCnt)
+									}()
+								}
+							}
+						} else {
+							time.Sleep(1 * time.Second)
 						}
 					}
-				} else {
-					time.Sleep(1 * time.Second)
 				}
-			}
 		}
 	}
 }

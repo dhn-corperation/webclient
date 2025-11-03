@@ -3,6 +3,7 @@ package resultreq
 import (
 	"fmt"
 	"time"
+	"context"
 	s "strings"
 	"encoding/json"
 
@@ -11,44 +12,53 @@ import (
 	"webclient/src/databasepool"
 )
 
-func ResultReqProc() {
+func ResultReqProc(ctx context.Context) {
+	config.Stdlog.Println("결과 조회 프로세스 시작")
 	procCnt := 0
 	for {
-		if procCnt < 3 {
-			resp, err := config.Client.R().
-				SetHeaders(map[string]string{"userid": config.Conf.USERID}).
-				Post(config.Conf.SERVER + "result")
-			if err != nil {
-				config.Stdlog.Println("메시지 결과 요청 오류 : ", err)
-				time.Sleep(5 * time.Second)
-			} else {
-				if resp.StatusCode() == 200 {
-					str := resp.Body()
-					var result []resulttable.ResultTable
-					if err := json.Unmarshal([]byte(str), &result); err != nil {
-						config.Stdlog.Println("결과 데이터 맵핑 실패 err :", err)
-						config.Stdlog.Println(string(str))
+		select {
+			case <- ctx.Done():
+				config.Stdlog.Println("결과 조회 - process가 15초 후에 종료")
+			    time.Sleep(15 * time.Second)
+			    config.Stdlog.Println("결과 조회 - process 종료 완료")
+				return
+			default:
+				if procCnt < 3 {
+					resp, err := config.Client.R().
+						SetHeaders(map[string]string{"userid": config.Conf.USERID}).
+						Post(config.Conf.SERVER + "result")
+					if err != nil {
+						config.Stdlog.Println("메시지 결과 요청 오류 : ", err)
+						time.Sleep(5 * time.Second)
 					} else {
-						if len(result) >= 1 {
-							procCnt++
-							go func() {
-								defer func() {
-									procCnt--
-								}()
-								config.Stdlog.Println("결과 수신 완료 : ", len(result), " 건 처리 시작 - procCnt :", procCnt)
-								getResultProcess(result, procCnt)
-							}()
+						if resp.StatusCode() == 200 {
+							str := resp.Body()
+							var result []resulttable.ResultTable
+							if err := json.Unmarshal([]byte(str), &result); err != nil {
+								config.Stdlog.Println("결과 데이터 맵핑 실패 err :", err)
+								config.Stdlog.Println(string(str))
+							} else {
+								if len(result) >= 1 {
+									procCnt++
+									go func() {
+										defer func() {
+											procCnt--
+										}()
+										config.Stdlog.Println("결과 수신 완료 : ", len(result), " 건 처리 시작 - procCnt :", procCnt)
+										getResultProcess(result, procCnt)
+									}()
+								} else {
+									time.Sleep(1 * time.Second)
+								}
+							}
 						} else {
+							config.Stdlog.Println("결과 서버 요청 처리 중 오류 발생 ", resp)
 							time.Sleep(1 * time.Second)
 						}
 					}
 				} else {
-					config.Stdlog.Println("결과 서버 요청 처리 중 오류 발생 ", resp)
-					time.Sleep(1 * time.Second)
+					time.Sleep(50 * time.Millisecond)
 				}
-			}
-		} else {
-			time.Sleep(50 * time.Millisecond)
 		}
 	}
 }
