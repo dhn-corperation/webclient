@@ -21,9 +21,9 @@ import (
 )
 
 const (
-	name        = "DHNClient_m"
-	description = "마트톡 카카오 발송 프로그램"
-	port  		= ":3310"
+	name        = "DHNClient_callbs"
+	description = "콜비서 카카오 발송 프로그램"
+	port  		= ":5010"
 
 	// name        = "DHNClient_g"
 	// description = "올지니 카카오 발송 프로그램"
