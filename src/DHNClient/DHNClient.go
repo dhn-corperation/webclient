@@ -21,9 +21,9 @@ import (
 )
 
 const (
-	name        = "DHNClient_callbs"
-	description = "콜비서 카카오 발송 프로그램"
-	port  		= ":5010"
+	// name        = "DHNClient_callbs"
+	// description = "콜비서 카카오 발송 프로그램"
+	// port  		= ":5010"
 
 	// name        = "DHNClient_g"
 	// description = "올지니 카카오 발송 프로그램"
@@ -40,6 +40,10 @@ const (
 	// name        = "DHNClient_s"
 	// description = "싸다고 카카오 발송 프로그램"
 	// port  		= ":3350"
+
+	name        = "DHNClient_e"
+	description = "당선 카카오 발송 프로그램"
+	port  		= ":3360"
 )
 
 var dependencies = []string{name+".service"}
