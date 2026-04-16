@@ -232,6 +232,7 @@ func sendProcess(group_no string, procCnt int) {
 		"attachments":   "attachments",
 		"att_items":     "att_items",
 		"att_coupon":    "att_coupon",
+		"v2_flag":		 "v2_flag",
 	}
 
 	reqsql := "select * from " + conf.REQTABLE + " where group_no = '" + group_no + "'"
