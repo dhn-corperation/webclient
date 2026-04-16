@@ -21,25 +21,17 @@ import (
 )
 
 const (
-	name        = "DHNClient_callbs"
-	description = "콜비서 카카오 발송 프로그램"
-	port  		= ":5010"
+	// name        = "DHNClient_callbs"
+	// description = "콜비서 카카오 발송 프로그램"
+	// port  		= ":5010"
 
-	// name        = "DHNClient_g"
-	// description = "올지니 카카오 발송 프로그램"
-	// port  		= ":3320"
+	// name        = "DHNClient_daigyeo"
+	// description = "다이겨 카카오 발송 프로그램"
+	// port  		= ":5020"
 
-	// name        = "DHNClient_o"
-	// description = "오투오 카카오 발송 프로그램"
-	// port  		= ":3330"
-
-	// name        = "DHNClient_p"
-	// description = "스피드톡 카카오 발송 프로그램"
-	// port  		= ":3340"
-
-	// name        = "DHNClient_s"
-	// description = "싸다고 카카오 발송 프로그램"
-	// port  		= ":3350"
+	name        = "DHNClient_yale"
+	description = "예일 카카오 발송 프로그램"
+	port  		= ":5030"
 )
 
 var dependencies = []string{name+".service"}
