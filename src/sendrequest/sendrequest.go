@@ -328,19 +328,27 @@ func sendProcess(group_no string, procCnt int) {
 		Post(conf.SERVER + "req")
 
 	if err != nil {
-		errlog.Println("메시지 서버 호출 오류", err)
-		databasepool.DB.Exec("update " + conf.REQTABLE + "set group_no = null where group_no = '" + group_no + "'")
+		errlog.Println("메시지 서버 호출 오류: " + err.Error() + " / group_no : " + group_no)
+		databasepool.DB.Exec("update " + conf.REQTABLE + "set group_no = null where group_no = ?", group_no)
 	} else {
 
 		if resp.StatusCode() == 200 {
-			databasepool.DB.Exec("delete from " + conf.REQTABLE + " where group_no = '" + group_no + "'")
+			_, err = databasepool.DB.Exec("delete from " + conf.REQTABLE + " where group_no = ?", group_no)
+			if err != nil {
+				errlog.Println("그룹 넘버 삭제 오류 err: " + err.Error() + " / group_no : " + group_no)
+				time.Sleep(1 * time.Second)
+				_, err = databasepool.DB.Exec("delete from " + conf.REQTABLE + " where group_no = ?", group_no)
+				if err != nil {
+					errlog.Println("그룹 넘버 삭제 두번째 오류 err: " + err.Error() + " / group_no : " + group_no)
+				}
+			}
 		} else if resp.StatusCode() == 404 {
 			stdlog.Println("허용되지 않은 사용자 입니다.")
 		} else {
 			stdlog.Println("서버 처리 오류 !! ( ", resp, " )")
 			time.Sleep(5 * time.Second)
 			stdlog.Println("그룹 넘버 초기화 시작 group_no : ", group_no)
-			databasepool.DB.Exec("update " + conf.REQTABLE + "set group_no = null where group_no = '" + group_no + "'")
+			databasepool.DB.Exec("update " + conf.REQTABLE + "set group_no = null where group_no = ?", group_no)
 			stdlog.Println("그룹 넘버 초기화 끝 group_no : ", group_no)
 		}
 	}

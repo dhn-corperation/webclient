@@ -25,9 +25,9 @@ const (
 	// description = "마트톡 카카오 발송 프로그램"
 	// port  		= ":3310"
 
-	// name        = "DHNClient_g"
-	// description = "올지니 카카오 발송 프로그램"
-	// port  		= ":3320"
+	name        = "DHNClient_g"
+	description = "올지니 카카오 발송 프로그램"
+	port  		= ":3320"
 
 	// name        = "DHNClient_o"
 	// description = "오투오 카카오 발송 프로그램"
@@ -41,9 +41,9 @@ const (
 	// description = "싸다고 카카오 발송 프로그램"
 	// port  		= ":3350"
 
-	name        = "DHNClient_e"
-	description = "당선톡 카카오 발송 프로그램"
-	port  		= ":3360"
+	// name        = "DHNClient_e"
+	// description = "당선톡 카카오 발송 프로그램"
+	// port  		= ":3360"
 )
 
 var dependencies = []string{name+".service"}
