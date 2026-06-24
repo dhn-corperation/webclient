@@ -83,9 +83,11 @@ func Process(ctx context.Context) {
 								}
 							}
 						} else {
-							time.Sleep(50 * time.Millisecond)
+							time.Sleep(500 * time.Millisecond)
 						}
 					}
+				} else {
+					time.Sleep(500 * time.Millisecond)
 				}
 		}
 		
@@ -232,21 +234,28 @@ func sendProcess(group_no string, procCnt int) {
 		"attachments":   "attachments",
 		"att_items":     "att_items",
 		"att_coupon":    "att_coupon",
+		"v2_flag":		 "v2_flag",
 	}
 
 	reqsql := "select * from " + conf.REQTABLE + " where group_no = '" + group_no + "'"
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
-		//errlog.Fatal(err)
-		config.Stdlog.Println(conf.REQTABLE + " Table - Select 오류 : ( " + group_no + " ) : " + err.Error())
+		config.Stdlog.Println(conf.REQTABLE + " Table - Select err: ( " + group_no + " ) : " + err.Error())
+		_, err = databasepool.DB.Exec("delete from " + conf.REQTABLE + " where group_no = ?", group_no)
+		if err != nil {
+			errlog.Println("그룹 넘버 삭제 Table - Select err: " + err.Error() + " / group_no : " + group_no)
+		}
 		panic(err)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
-		//errlog.Fatal(err)
 		config.Stdlog.Println(conf.REQTABLE + " Table - ColumnType 조회 오류" + err.Error())
+		_, err = databasepool.DB.Exec("delete from " + conf.REQTABLE + " where group_no = ?", group_no)
+		if err != nil {
+			errlog.Println("그룹 넘버 삭제 ColumnType 조회 err: " + err.Error() + " / group_no : " + group_no)
+		}
 		panic(err)
 	}
 	count := len(columnTypes)
@@ -279,7 +288,6 @@ func sendProcess(group_no string, procCnt int) {
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
-			//errlog.Fatal(err)
 			config.Stdlog.Println(conf.REQTABLE + " Table - Scan 오류" + err.Error())
 		}
 
